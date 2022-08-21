@@ -41,7 +41,7 @@ int main(int argc, const char **argv) {
 	opt_result_init(&result, matches, LEN(matches));
 
  	Opt_Info opts[3];
-	opt_info_init(&opts[0], "verbose", "v", "Set verbose output", OPT_VALUE_NONE, OPT_INFO_COLLAPSE);
+	opt_info_init(&opts[0], "verbose", "v", "Set verbose output", OPT_VALUE_NONE, OPT_INFO_KEEP_FIRST);
 	opt_info_init(&opts[1], "", "o", "Set output file path", OPT_VALUE_STRING, OPT_INFO_REPORT_MISSING);
 	opt_info_init(&opts[2], "must-write", NULL, "Set must-write flag", OPT_VALUE_BOOL, OPT_INFO_KEEP_LAST);
 

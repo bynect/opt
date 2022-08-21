@@ -34,9 +34,10 @@ typedef struct {
 } Opt_Value;
 
 typedef enum {
-	OPT_INFO_COLLAPSE = 1 << 1,
+	OPT_INFO_KEEP_FIRST = 1 << 1,
 	OPT_INFO_KEEP_LAST = 1 << 2,
 	OPT_INFO_REPORT_MISSING = 1 << 3,
+	OPT_INFO_NO_DUPLICATE = 1 << 4, // TODO: Maybe REPORT_DUPLICATE?
 } Opt_Info_Flag;
 
 typedef struct {

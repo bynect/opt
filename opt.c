@@ -122,6 +122,9 @@ void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name
 	assert((short_name != NULL || long_name != NULL) && "No name given to option");
 }
 
+void opt_info_help(Opt_Info *opts, size_t opts_len, const char *usage, const char *note) {
+}
+
 void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len) {
 	result->bin_name = NULL;
 	result->matches = matches;
@@ -193,7 +196,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 					if (info->long_len == 0) continue;
 					if (!strncmp(base, info->long_name, info->long_len)) {
-						if (info->_seen > 0 && (info->flags & OPT_INFO_COLLAPSE)) {
+						if (info->_seen > 0 && (info->flags & OPT_INFO_KEEP_FIRST)) {
 							ignore = true;
 							break;
 						}
@@ -216,16 +219,18 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 						match = match_option(opt, value);
 						found = true;
 
-						if (info->flags & OPT_INFO_KEEP_LAST) {
-							if (info->_seen > 0) {
+						if (info->_seen > 0) {
+							if (info->flags & OPT_INFO_KEEP_FIRST) {
 								ignore = true;
+								break;
+							} else if (info->flags & OPT_INFO_KEEP_LAST) {
 								memcpy(&result->matches[info->_match], &match, sizeof(Opt_Match));
+								ignore = true;
 								break;
 							}
-
-							info->_match = result->matches_len;
 						}
 
+						info->_match = result->matches_len;
 						++info->_seen;
 						break;
 					}
@@ -239,10 +244,6 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 					if (info->short_len == 0) continue;
 					if (!strncmp(base, info->short_name, info->short_len)) {
-						if (info->_seen > 0 && (info->flags & OPT_INFO_COLLAPSE)) {
-							ignore = true;
-							break;
-						}
 
 						if (info->value_kind != OPT_VALUE_NONE) {
 							const char *base_value = NULL;
@@ -262,16 +263,18 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 						match = match_option(opt, value);
 						found = true;
 
-						if (info->flags & OPT_INFO_KEEP_LAST) {
-							if (info->_seen > 0) {
+						if (info->_seen > 0) {
+							if (info->flags & OPT_INFO_KEEP_FIRST) {
 								ignore = true;
+								break;
+							} else if (info->flags & OPT_INFO_KEEP_LAST) {
 								memcpy(&result->matches[info->_match], &match, sizeof(Opt_Match));
+								ignore = true;
 								break;
 							}
-
-							info->_match = result->matches_len;
 						}
 
+						info->_match = result->matches_len;
 						++info->_seen;
 						break;
 					}
