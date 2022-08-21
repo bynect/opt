@@ -9,10 +9,12 @@ static const char *errs[] = {
 	"OPT_ERROR_NONE",
 	"OPT_ERROR_MATCHES_FULL",
 	"OPT_ERROR_MALFORMED_ARG",
+	"OPT_ERROR_MALFORMED_VALUE",
 	"OPT_ERROR_MISSING_NAME",
 	"OPT_ERROR_MISSING_VALUE",
 	"OPT_ERROR_INVALID_OPTS",
 	"OPT_ERROR_UNKNOWN_OPTION",
+	"OPT_ERROR_INVALID_MATCHES",
 	"OPT_ERROR_UNKNOWN_VALUE",
 };
 
@@ -37,7 +39,7 @@ static void print_value(Opt_Value value) {
 }
 
 static void print_result(Opt_Result result) {
-	printf("program: %s\n", result.program);
+	printf("program: %s\n", result.bin_name);
 	for (size_t i = 0; i < result.matches_len; ++i) {
 		Opt_Match match = result.matches[i];
 		if (match.kind == OPT_MATCH_SIMPLE) {
@@ -50,7 +52,7 @@ static void print_result(Opt_Result result) {
 	}
 }
 
-void check(Opt_Error error) {
+static void check(Opt_Error error) {
 	if (error.kind != OPT_ERROR_NONE) {
 		printf("%s\n", errs[error.kind]);
 		exit(1);

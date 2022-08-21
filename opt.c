@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -21,22 +22,36 @@ static Opt_Value value_none() {
 	};
 }
 
-static Opt_Error value_read(Opt_Value *value, const char *base) {
+static inline Opt_Error int_read(int64_t *vint, const char *base) {
+	char *end = NULL;
+	*vint = strtol(base, &end, 0);
+	if (end[0] != '\0') return error(OPT_ERROR_MALFORMED_VALUE, (void *)base);
+	return error_simple(OPT_ERROR_NONE);
+}
+
+Opt_Error opt_value_read(Opt_Value *value, const char *base) {
 	switch (value->kind) {
+		case OPT_VALUE_NONE:
+			break;
+
 		case OPT_VALUE_STRING:
 			value->vstring = base;
 			break;
 
 		case OPT_VALUE_INT:
-			value->vint = atoi(base); // XXX
-			break;
+			if (base[0] == '\0') return error(OPT_ERROR_MISSING_VALUE, (void *)base);
+			return int_read(&value->vint, base);
 
 		case OPT_VALUE_BOOL:
-			value->vbool = !strcmp(base, "t") || !strcmp(base, "T") || !strcmp(base, "true"); // XXX
+			if (base[0] == '\0') return error(OPT_ERROR_MISSING_VALUE, (void *)base);
+
+			if (!strcmp(base, "t") || !strcmp(base, "T") || !strcmp(base, "true")) value->vbool = true;
+			else if (!strcmp(base, "f") || !strcmp(base, "F") || !strcmp(base, "false")) value->vbool = false;
+			else return error(OPT_ERROR_UNKNOWN_VALUE, (void *)base);
 			break;
 
 		default:
-			return error(OPT_ERROR_UNKNOWN_VALUE, (void *)base);
+			return error_simple(OPT_ERROR_UNKNOWN_VALUE);
 	}
 	return error_simple(OPT_ERROR_NONE);
 }
@@ -58,27 +73,30 @@ static Opt_Match match_option(size_t opt, Opt_Value value) {
 	};
 }
 
-Opt_Error opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind) {
+Opt_Error opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, Opt_Info_Flag flags) {
 	info->long_name = long_name;
 	info->long_len = long_name != NULL ? strlen(long_name) : 0;
 	info->short_name = short_name;
 	info->short_len = short_name != NULL ? strlen(short_name) : 0;
 	info->desc = desc;
 	info->value_kind = value_kind;
+	info->flags = flags;
+	info->_seen = 0;
 
 	return (short_name != NULL || long_name != NULL)
 		? error_simple(OPT_ERROR_NONE)
 		: error(OPT_ERROR_MISSING_NAME, info);
 }
 
-void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len) {
-	result->program = NULL;
+Opt_Error opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len) {
+	result->bin_name = NULL;
 	result->matches = matches;
 	result->matches_len = 0;
 	result->matches_size = matches_len;
 
-	assert(matches != NULL);
-	assert(matches_len != 0);
+	return (matches != NULL && matches_len != 0)
+		? error_simple(OPT_ERROR_NONE)
+		: error(OPT_ERROR_INVALID_MATCHES, (void *)matches);
 }
 
 static int result_compare(const void *a, const void *b) {
