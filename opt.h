@@ -22,6 +22,7 @@ typedef enum {
 	OPT_VALUE_NONE,
 	OPT_VALUE_STRING,
 	OPT_VALUE_INT,
+	OPT_VALUE_FLOAT,
 	OPT_VALUE_BOOL,
 } Opt_Value_Kind;
 
@@ -30,6 +31,7 @@ typedef struct {
 	union {
 		const char *vstring;
 		int64_t vint;
+		double vfloat;
 		bool vbool;
 	};
 } Opt_Value;

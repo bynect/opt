@@ -55,6 +55,13 @@ static inline Opt_Error int_read(int64_t *vint, const char *base) {
 	return error_simple(OPT_ERROR_NONE);
 }
 
+static inline Opt_Error float_read(double *vfloat, const char *base) {
+	char *end = NULL;
+	*vfloat = strtod(base, &end);
+	if (end[0] != '\0') return error(OPT_ERROR_INVALID_VALUE, (void *)base);
+	return error_simple(OPT_ERROR_NONE);
+}
+
 static inline Opt_Error bool_read(bool *vbool, const char *base) {
 	if (!strcmp(base, "t") || !strcmp(base, "T") || !strcmp(base, "true")) *vbool = true;
 	else if (!strcmp(base, "f") || !strcmp(base, "F") || !strcmp(base, "false")) *vbool = false;
@@ -75,6 +82,10 @@ Opt_Error opt_value_read(Opt_Value *value, const char *base) {
 		case OPT_VALUE_INT:
 			if (base[0] == '\0') return error(OPT_ERROR_MISSING_VALUE, (void *)base);
 			return int_read(&value->vint, base);
+
+		case OPT_VALUE_FLOAT:
+			if (base[0] == '\0') return error(OPT_ERROR_MISSING_VALUE, (void *)base);
+			return float_read(&value->vfloat, base);
 
 		case OPT_VALUE_BOOL:
 			if (base[0] == '\0') return error(OPT_ERROR_MISSING_VALUE, (void *)base);
@@ -98,6 +109,10 @@ void opt_value_print(Opt_Value value) {
 
 		case OPT_VALUE_INT:
 			printf("%ld", value.vint);
+			break;
+
+		case OPT_VALUE_FLOAT:
+			printf("%lf", value.vfloat);
 			break;
 
 		case OPT_VALUE_BOOL:
