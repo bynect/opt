@@ -44,10 +44,12 @@ static void print_result(Opt_Result result) {
 		Opt_Match match = result.matches[i];
 		if (match.kind == OPT_MATCH_SIMPLE) {
 			printf("simple: %s\n", match.simple);
-		} else {
+		} else if (match.kind == OPT_MATCH_OPTION) {
 			printf("option: %zu = ", match.option.opt);
 			print_value(match.option.value);
 			printf("\n");
+		} else {
+			printf("missing: %zu\n", match.missing_opt);
 		}
 	}
 }
@@ -66,14 +68,12 @@ int main(int argc, const char **argv) {
 
  	Opt_Info opts[3];
 	check(opt_info_init(&opts[0], "verbose", "v", "Set verbose output", OPT_VALUE_NONE, OPT_INFO_COLLAPSE));
-	check(opt_info_init(&opts[1], "", "o", "Set output file path", OPT_VALUE_STRING, 0));
-	check(opt_info_init(&opts[2], "must-write", NULL, "Set must-write flag", OPT_VALUE_BOOL, 0));
+	check(opt_info_init(&opts[1], "", "o", "Set output file path", OPT_VALUE_STRING, OPT_INFO_REPORT_MISSING));
+	check(opt_info_init(&opts[2], "must-write", NULL, "Set must-write flag", OPT_VALUE_BOOL, OPT_INFO_KEEP_LAST));
 
 	Opt_Parser parser;
 	check(opt_parser_init(&parser, opts, LEN(opts)));
-
 	check(opt_parser_run(&parser, &result, argv, argc));
-
 
 	printf("Raw result\n");
 	print_result(result);

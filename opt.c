@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
@@ -73,6 +74,13 @@ static Opt_Match match_option(size_t opt, Opt_Value value) {
 	};
 }
 
+static Opt_Match match_missing(size_t opt) {
+	return (Opt_Match) {
+		.kind = OPT_MATCH_MISSING,
+		.missing_opt = opt,
+	};
+}
+
 Opt_Error opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, Opt_Info_Flag flags) {
 	info->long_name = long_name;
 	info->long_len = long_name != NULL ? strlen(long_name) : 0;
@@ -113,9 +121,8 @@ static int result_compare(const void *a, const void *b) {
 
 	if (match_b->kind == OPT_MATCH_SIMPLE) return -1;
 
-	assert(match_a->kind == OPT_MATCH_OPTION && match_b->kind == OPT_MATCH_OPTION);
-	size_t opt_a = match_a->option.opt;
-	size_t opt_b = match_b->option.opt;
+	size_t opt_a = match_a->kind == OPT_MATCH_OPTION ? match_a->option.opt : match_a->missing_opt;
+	size_t opt_b = match_b->kind == OPT_MATCH_OPTION ? match_b->option.opt : match_b->missing_opt;
 	return (opt_a > opt_b) - (opt_a < opt_b);
 }
 
@@ -187,6 +194,17 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 						match = match_option(opt, value);
 						found = true;
+
+						if (info->flags & OPT_INFO_KEEP_LAST) {
+							if (info->_seen > 0) {
+								ignore = true;
+								memcpy(&result->matches[info->_match], &match, sizeof(Opt_Match));
+								break;
+							}
+
+							info->_match = result->matches_len;
+						}
+
 						++info->_seen;
 						break;
 					}
@@ -222,6 +240,17 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 						match = match_option(opt, value);
 						found = true;
+
+						if (info->flags & OPT_INFO_KEEP_LAST) {
+							if (info->_seen > 0) {
+								ignore = true;
+								memcpy(&result->matches[info->_match], &match, sizeof(Opt_Match));
+								break;
+							}
+
+							info->_match = result->matches_len;
+						}
+
 						++info->_seen;
 						break;
 					}
@@ -234,6 +263,14 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 		Opt_Error error = result_push(result, match);
 		if (error.kind != OPT_ERROR_NONE) return error;
+	}
+
+	for (size_t opt = 0; opt < parser->opts_len; ++opt) {
+		Opt_Info *info = &parser->opts[opt];
+		if ((info->flags & OPT_INFO_REPORT_MISSING) && info->_seen == 0) {
+			Opt_Error error = result_push(result, match_missing(opt));
+			if (error.kind != OPT_ERROR_NONE) return error;
+		}
 	}
 
 	result->bin_name = argv[0];

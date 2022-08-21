@@ -41,7 +41,8 @@ typedef struct {
 
 typedef enum {
 	OPT_INFO_COLLAPSE = 1 << 1,
-	OPT_INFO_ENSURE = 1 << 2,
+	OPT_INFO_KEEP_LAST = 1 << 2,
+	OPT_INFO_REPORT_MISSING = 1 << 3,
 } Opt_Info_Flag;
 
 typedef struct {
@@ -52,7 +53,8 @@ typedef struct {
 	const char *desc;
 	Opt_Value_Kind value_kind;
 	Opt_Info_Flag flags;
-	int _seen;
+	size_t _seen;
+	size_t _match;
 } Opt_Info;
 
 typedef struct {
@@ -63,6 +65,7 @@ typedef struct {
 typedef enum {
 	OPT_MATCH_SIMPLE,
 	OPT_MATCH_OPTION,
+	OPT_MATCH_MISSING,
 } Opt_Match_Kind;
 
 typedef struct {
@@ -73,6 +76,7 @@ typedef struct {
 			size_t opt;
 			Opt_Value value;
 		} option;
+		size_t missing_opt;
 	};
 } Opt_Match;
 
