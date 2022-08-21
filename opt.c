@@ -6,18 +6,18 @@
 
 #include "opt.h"
 
-static Opt_Error error(Opt_Error_Kind kind, void *payload) {
+static inline Opt_Error error(Opt_Error_Kind kind, void *payload) {
 	return (Opt_Error) {
 		.kind = kind,
 		.payload = payload,
 	};
 }
 
-static Opt_Error error_simple(Opt_Error_Kind kind) {
+static inline Opt_Error error_simple(Opt_Error_Kind kind) {
 	return error(kind, NULL);
 }
 
-static Opt_Value value_none() {
+static inline Opt_Value value_none() {
 	return (Opt_Value) {
 		.kind = OPT_VALUE_NONE,
 	};
@@ -28,6 +28,30 @@ static inline Opt_Error int_read(int64_t *vint, const char *base) {
 	*vint = strtol(base, &end, 0);
 	if (end[0] != '\0') return error(OPT_ERROR_INVALID_VALUE, (void *)base);
 	return error_simple(OPT_ERROR_NONE);
+}
+
+static inline Opt_Match match_simple(const char *simple) {
+	return (Opt_Match) {
+		.kind = OPT_MATCH_SIMPLE,
+		.simple = simple,
+	};
+}
+
+static inline Opt_Match match_option(size_t opt, Opt_Value value) {
+	return (Opt_Match) {
+		.kind = OPT_MATCH_OPTION,
+		.option = {
+			.opt = opt,
+			.value = value,
+		},
+	};
+}
+
+static inline Opt_Match match_missing(size_t opt) {
+	return (Opt_Match) {
+		.kind = OPT_MATCH_MISSING,
+		.missing_opt = opt,
+	};
 }
 
 Opt_Error opt_value_read(Opt_Value *value, const char *base) {
@@ -55,30 +79,6 @@ Opt_Error opt_value_read(Opt_Value *value, const char *base) {
 			return error_simple(OPT_ERROR_UNKNOWN_VALUE);
 	}
 	return error_simple(OPT_ERROR_NONE);
-}
-
-static Opt_Match match_simple(const char *simple) {
-	return (Opt_Match) {
-		.kind = OPT_MATCH_SIMPLE,
-		.simple = simple,
-	};
-}
-
-static Opt_Match match_option(size_t opt, Opt_Value value) {
-	return (Opt_Match) {
-		.kind = OPT_MATCH_OPTION,
-		.option = {
-			.opt = opt,
-			.value = value,
-		},
-	};
-}
-
-static Opt_Match match_missing(size_t opt) {
-	return (Opt_Match) {
-		.kind = OPT_MATCH_MISSING,
-		.missing_opt = opt,
-	};
 }
 
 Opt_Error opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, Opt_Info_Flag flags) {
@@ -120,6 +120,9 @@ static int result_compare(const void *a, const void *b) {
 	}
 
 	if (match_b->kind == OPT_MATCH_SIMPLE) return -1;
+
+	assert(match_a->kind == OPT_MATCH_OPTION || match_a->kind == OPT_MATCH_MISSING);
+	assert(match_b->kind == OPT_MATCH_OPTION || match_b->kind == OPT_MATCH_MISSING);
 
 	size_t opt_a = match_a->kind == OPT_MATCH_OPTION ? match_a->option.opt : match_a->missing_opt;
 	size_t opt_b = match_b->kind == OPT_MATCH_OPTION ? match_b->option.opt : match_b->missing_opt;

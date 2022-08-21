@@ -88,6 +88,8 @@ typedef struct {
 	size_t matches_size;
 } Opt_Result;
 
+Opt_Error opt_value_read(Opt_Value *value, const char *base);
+
 Opt_Error opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, Opt_Info_Flag flags);
 
 Opt_Error opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len);
