@@ -39,7 +39,7 @@ typedef enum {
 	OPT_INFO_KEEP_FIRST = 1 << 0,
 	OPT_INFO_KEEP_LAST = 1 << 1,
 	OPT_INFO_NO_DUPLICATE = 1 << 2,
-	OPT_INFO_REPORT_MISSING = 1 << 3,
+	OPT_INFO_REQUIRED = 1 << 3,
 } Opt_Info_Flag;
 
 typedef struct {
@@ -94,7 +94,9 @@ void opt_value_print(Opt_Value value);
 
 void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, Opt_Info_Flag flags);
 
-void opt_info_help(Opt_Info *opts, size_t opts_len, const char *usage, const char *note);
+void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name);
+
+void opt_info_help(Opt_Info *opts, size_t opts_len, const char *usage, const char *head_note, const char *foot_note);
 
 void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len);
 
