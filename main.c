@@ -41,10 +41,11 @@ int main(int argc, const char **argv) {
 	Opt_Match matches[10];
 	opt_result_init(&result, matches, LEN(matches));
 
- 	Opt_Info opts[3];
-	opt_info_init(&opts[0], "verbose", "v", "Set verbose output", OPT_VALUE_NONE, OPT_INFO_KEEP_FIRST);
-	opt_info_init(&opts[1], "", "o", "Set output file path", OPT_VALUE_STRING, OPT_INFO_REPORT_MISSING);
-	opt_info_init(&opts[2], "must-write", NULL, "Set must-write flag", OPT_VALUE_BOOL, OPT_INFO_KEEP_LAST);
+	Opt_Info opts[4];
+	opt_info_init(&opts[0], "help", "h", "Show help information", OPT_VALUE_NONE, OPT_INFO_KEEP_FIRST);
+	opt_info_init(&opts[1], "verbose", "v", "Set verbose output", OPT_VALUE_NONE, OPT_INFO_KEEP_FIRST);
+	opt_info_init(&opts[2], "", "o", "Set output file path", OPT_VALUE_STRING, OPT_INFO_REPORT_MISSING);
+	opt_info_init(&opts[3], "must-write", NULL, "Set must-write flag", OPT_VALUE_BOOL, OPT_INFO_KEEP_LAST);
 
 	Opt_Parser parser;
 	opt_parser_init(&parser, opts, LEN(opts));
@@ -54,10 +55,15 @@ int main(int argc, const char **argv) {
 	printf("Raw result\n");
 	print_result(result);
 
-	opt_result_sort(&result, false);
+	opt_result_sort(&result, true);
 
 	printf("\nSorted result\n");
 	print_result(result);
+
+	printf("\n");
+	if (result.matches[0].kind == OPT_MATCH_OPTION && result.matches[0].option.opt == 0) {
+		opt_info_help(opts, LEN(opts), "Usage: x [options]", NULL);
+	}
 
 	return 0;
 }

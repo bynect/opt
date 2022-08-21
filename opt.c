@@ -123,6 +123,34 @@ void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name
 }
 
 void opt_info_help(Opt_Info *opts, size_t opts_len, const char *usage, const char *note) {
+	printf("%s\n", usage);
+
+	for (size_t opt = 0; opt < opts_len; ++opt) {
+		Opt_Info *info = &opts[opt];
+
+		size_t padding = 20;
+		printf("  ");
+
+		if (info->long_len != 0) {
+			printf("--%s", info->long_name);
+			padding -= info->long_len + 2;
+
+			if (info->short_len != 0) {
+				printf(", ");
+				padding -= 2;
+			}
+		}
+
+		if (info->short_len != 0) {
+			printf("-%s", info->short_name);
+			padding -= info->short_len + 1;
+		}
+
+		for (size_t i = 0; i < padding; ++i) putchar(' ');
+		printf("%s\n", info->desc);
+	}
+
+	if (note != NULL) printf("%s\n", note);
 }
 
 void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len) {
