@@ -3,10 +3,15 @@
 
 #include "opt.h"
 
+#define LEN(x) (sizeof(x) / sizeof(*x))
+
 static const char *errs[] = {
 	"OPT_ERROR_NONE",
 	"OPT_ERROR_MATCHES_FULL",
 	"OPT_ERROR_MALFORMED_ARG",
+	"OPT_ERROR_MISSING_NAME",
+	"OPT_ERROR_MISSING_VALUE",
+	"OPT_ERROR_INVALID_OPTS",
 	"OPT_ERROR_UNKNOWN_OPTION",
 	"OPT_ERROR_UNKNOWN_VALUE",
 };
@@ -39,37 +44,21 @@ void check(Opt_Error error) {
 }
 
 int main(int argc, const char **argv) {
-	Opt_Error error;
-	Opt_Match matches[10];
-
 	Opt_Result result;
-	opt_result_init(&result, matches, 10);
+	Opt_Match matches[10];
+	opt_result_init(&result, matches, LEN(matches));
 
- 	Opt_Info opts[3] = {
-		(Opt_Info) {
-			.long_name = "verbose",
-			.short_name = "v",
-			.value_kind = OPT_VALUE_NONE,
-		},
-		(Opt_Info) {
-			.short_name = "o",
-			.value_kind = OPT_VALUE_STRING,
-		},
-		(Opt_Info) {
-			.long_name = "must-write",
-			.value_kind = OPT_VALUE_NONE,
-		},
-	};
+ 	Opt_Info opts[3];
+	check(opt_info_init(&opts[0], "verbose", "v", "Set verbose output", OPT_VALUE_NONE));
+	check(opt_info_init(&opts[1], "", "o", "Set output file path", OPT_VALUE_STRING));
+	check(opt_info_init(&opts[2], "must-write", NULL, "Set must-write flag", OPT_VALUE_BOOL));
 
 	Opt_Parser parser;
-	error = opt_parser_init(&parser, opts, 3);
-	check(error);
+	check(opt_parser_init(&parser, opts, LEN(opts)));
 
-	error = opt_parser_run(&parser, &result, argv, argc);
-	check(error);
+	check(opt_parser_run(&parser, &result, argv, argc));
 
 	printf("program: %s\n", result.program);
-
 	for (size_t i = 0; i < result.matches_len; ++i) {
 		Opt_Match match = result.matches[i];
 		if (match.kind == OPT_MATCH_SIMPLE) {

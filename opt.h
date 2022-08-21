@@ -9,6 +9,9 @@ typedef enum {
 	OPT_ERROR_NONE,
 	OPT_ERROR_MATCHES_FULL,
 	OPT_ERROR_MALFORMED_ARG,
+	OPT_ERROR_MISSING_NAME,
+	OPT_ERROR_MISSING_VALUE,
+	OPT_ERROR_INVALID_OPTS,
 	OPT_ERROR_UNKNOWN_OPTION,
 	OPT_ERROR_UNKNOWN_VALUE,
 } Opt_Error_Kind;
@@ -39,14 +42,14 @@ typedef struct {
 	size_t long_len;
 	const char *short_name;
 	size_t short_len;
-//	const char *description;
+	const char *desc;
 //	enum {
 //		OPT_MUST = 1 << 1,
 //		OPT_SINGLE = 1 << 2,
 //		OPT_MANY = 1 << 3,
 //	} flags;
 	Opt_Value_Kind value_kind;
-	bool required;
+//	bool required;
 } Opt_Info;
 
 typedef struct {
@@ -76,6 +79,8 @@ typedef struct {
 	size_t matches_len;
 	size_t matches_size;
 } Opt_Result;
+
+Opt_Error opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind);
 
 void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len);
 
