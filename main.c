@@ -12,26 +12,6 @@ static const char *errs[] = {
 	"OPT_ERROR_INVALID_VALUE",
 };
 
-static void print_value(Opt_Value value) {
-	switch (value.kind) {
-		case OPT_VALUE_NONE:
-			printf("<<none>>");
-			break;
-
-		case OPT_VALUE_STRING:
-			printf("%s", value.vstring);
-			break;
-
-		case OPT_VALUE_INT:
-			printf("%ld", value.vint);
-			break;
-
-		case OPT_VALUE_BOOL:
-			printf("%s", value.vbool ? "true" : "false");
-			break;
-	}
-}
-
 static void print_result(Opt_Result result) {
 	printf("program: %s\n", result.bin_name);
 	for (size_t i = 0; i < result.matches_len; ++i) {
@@ -40,7 +20,7 @@ static void print_result(Opt_Result result) {
 			printf("simple: %s\n", match.simple);
 		} else if (match.kind == OPT_MATCH_OPTION) {
 			printf("option: %zu = ", match.option.opt);
-			print_value(match.option.value);
+			opt_value_print(match.option.value);
 			printf("\n");
 		} else {
 			printf("missing: %zu\n", match.missing_opt);

@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -83,6 +84,29 @@ Opt_Error opt_value_read(Opt_Value *value, const char *base) {
 			assert(true && "Unknown value kind");
 	}
 	return error_simple(OPT_ERROR_NONE);
+}
+
+void opt_value_print(Opt_Value value) {
+	switch (value.kind) {
+		case OPT_VALUE_NONE:
+			printf("none");
+			break;
+
+		case OPT_VALUE_STRING:
+			printf("'%s'", value.vstring);
+			break;
+
+		case OPT_VALUE_INT:
+			printf("%ld", value.vint);
+			break;
+
+		case OPT_VALUE_BOOL:
+			printf("%s", value.vbool ? "true" : "false");
+			break;
+
+		default:
+			assert(true && "Unknown value kind");
+	}
 }
 
 void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, Opt_Info_Flag flags) {

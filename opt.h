@@ -14,7 +14,7 @@ typedef enum {
 
 typedef struct {
 	Opt_Error_Kind kind;
-	void *payload;
+	void *payload; // TODO: Change payload
 } Opt_Error;
 
 typedef enum {
@@ -83,7 +83,11 @@ typedef struct {
 
 Opt_Error opt_value_read(Opt_Value *value, const char *base);
 
+void opt_value_print(Opt_Value value);
+
 void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, Opt_Info_Flag flags);
+
+void opt_info_help(Opt_Info *opts, size_t opts_len, const char *usage, const char *note);
 
 void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len);
 
