@@ -65,9 +65,9 @@ int main(int argc, const char **argv) {
 	opt_result_init(&result, matches, LEN(matches));
 
  	Opt_Info opts[3];
-	check(opt_info_init(&opts[0], "verbose", "v", "Set verbose output", OPT_VALUE_NONE));
-	check(opt_info_init(&opts[1], "", "o", "Set output file path", OPT_VALUE_STRING));
-	check(opt_info_init(&opts[2], "must-write", NULL, "Set must-write flag", OPT_VALUE_BOOL));
+	check(opt_info_init(&opts[0], "verbose", "v", "Set verbose output", OPT_VALUE_NONE, OPT_INFO_COLLAPSE));
+	check(opt_info_init(&opts[1], "", "o", "Set output file path", OPT_VALUE_STRING, 0));
+	check(opt_info_init(&opts[2], "must-write", NULL, "Set must-write flag", OPT_VALUE_BOOL, 0));
 
 	Opt_Parser parser;
 	check(opt_parser_init(&parser, opts, LEN(opts)));

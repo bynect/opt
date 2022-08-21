@@ -39,19 +39,20 @@ typedef struct {
 	};
 } Opt_Value;
 
+typedef enum {
+	OPT_INFO_COLLAPSE = 1 << 1,
+	OPT_INFO_ENSURE = 1 << 2,
+} Opt_Info_Flag;
+
 typedef struct {
 	const char *long_name;
 	size_t long_len;
 	const char *short_name;
 	size_t short_len;
 	const char *desc;
-//	enum {
-//		OPT_MUST = 1 << 1,
-//		OPT_SINGLE = 1 << 2,
-//		OPT_MANY = 1 << 3,
-//	} flags;
 	Opt_Value_Kind value_kind;
-//	bool required;
+	Opt_Info_Flag flags;
+	int _seen;
 } Opt_Info;
 
 typedef struct {
@@ -76,15 +77,15 @@ typedef struct {
 } Opt_Match;
 
 typedef struct {
-	const char *program;
+	const char *bin_name;
 	Opt_Match *matches;
 	size_t matches_len;
 	size_t matches_size;
 } Opt_Result;
 
-Opt_Error opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind);
+Opt_Error opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, Opt_Info_Flag flags);
 
-void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len);
+Opt_Error opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len);
 
 void opt_result_sort(Opt_Result *result);
 

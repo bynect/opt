@@ -145,10 +145,11 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 	bool no_opt = false;
 	for (int arg = 1; arg < argc; ++arg) {
 		const char *argi = argv[arg];
+		Opt_Match match = { 0 };
 
 		if (argi[0] == '-' && !no_opt) {
-			Opt_Match match = { 0 };
 			bool found = false;
+			bool ignore = false;
 
 			if (argi[1] == '-') {
 				if (argi[2] == '\0') {
@@ -164,6 +165,11 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 					if (info->long_len == 0) continue;
 					if (!strncmp(base, info->long_name, info->long_len)) {
+						if (info->_seen > 0 && (info->flags & OPT_INFO_COLLAPSE)) {
+							ignore = true;
+							break;
+						}
+
 						if (info->value_kind != OPT_VALUE_NONE) {
 							const char *base_value = NULL;
 							if (base[info->long_len] == '=') {
@@ -172,7 +178,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 							else return error(OPT_ERROR_MISSING_VALUE, (void *)argi);
 
 							value.kind = info->value_kind;
-							Opt_Error error = value_read(&value, base_value);
+							Opt_Error error = opt_value_read(&value, base_value);
 							if (error.kind != OPT_ERROR_NONE) return error;
 						} else {
 							if (base[info->long_len] != '\0') return error(OPT_ERROR_MALFORMED_ARG, (void *)argi);
@@ -181,6 +187,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 						match = match_option(opt, value);
 						found = true;
+						++info->_seen;
 						break;
 					}
 				}
@@ -193,6 +200,11 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 					if (info->short_len == 0) continue;
 					if (!strncmp(base, info->short_name, info->short_len)) {
+						if (info->_seen > 0 && (info->flags & OPT_INFO_COLLAPSE)) {
+							ignore = true;
+							break;
+						}
+
 						if (info->value_kind != OPT_VALUE_NONE) {
 							const char *base_value = NULL;
 							if (base[info->short_len] == '=') {
@@ -201,7 +213,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 							else return error(OPT_ERROR_MISSING_VALUE, (void *)argi);
 
 							value.kind = info->value_kind;
-							Opt_Error error = value_read(&value, base_value);
+							Opt_Error error = opt_value_read(&value, base_value);
 							if (error.kind != OPT_ERROR_NONE) return error;
 						} else {
 							if (base[info->short_len] != '\0') return error(OPT_ERROR_MALFORMED_ARG, (void *)argi);
@@ -210,21 +222,20 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 						match = match_option(opt, value);
 						found = true;
+						++info->_seen;
 						break;
 					}
 				}
 			}
 
-			if (found) {
-				Opt_Error error = result_push(result, match);
-				if (error.kind != OPT_ERROR_NONE) return error;
-			} else return error(OPT_ERROR_UNKNOWN_OPTION, (void *)argi);
-		} else {
-			Opt_Error error = result_push(result, match_simple(argi));
-			if (error.kind != OPT_ERROR_NONE) return error;
-		}
+			if (ignore) continue;
+			if (!found) return error(OPT_ERROR_UNKNOWN_OPTION, (void *)argi);
+		} else match = match_simple(argi);
+
+		Opt_Error error = result_push(result, match);
+		if (error.kind != OPT_ERROR_NONE) return error;
 	}
 
-	result->program = argv[0];
+	result->bin_name = argv[0];
 	return error_simple(OPT_ERROR_NONE);
 }
