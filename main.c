@@ -9,6 +9,7 @@ static const char *errs[] = {
 	"OPT_ERROR_NONE",
 	"OPT_ERROR_MISSING_VALUE",
 	"OPT_ERROR_UNKNOWN_OPTION",
+	"OPT_ERROR_DUPLICATE_OPTION",
 	"OPT_ERROR_INVALID_VALUE",
 };
 
@@ -53,7 +54,7 @@ int main(int argc, const char **argv) {
 	printf("Raw result\n");
 	print_result(result);
 
-	opt_result_sort(&result);
+	opt_result_sort(&result, false);
 
 	printf("\nSorted result\n");
 	print_result(result);

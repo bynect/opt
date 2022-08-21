@@ -9,8 +9,8 @@ typedef enum {
 	OPT_ERROR_NONE,
 	OPT_ERROR_MISSING_VALUE,
 	OPT_ERROR_UNKNOWN_OPTION,
-	OPT_ERROR_INVALID_VALUE,
 	OPT_ERROR_DUPLICATE_OPTION,
+	OPT_ERROR_INVALID_VALUE,
 } Opt_Error_Kind;
 
 typedef struct {
@@ -35,10 +35,11 @@ typedef struct {
 } Opt_Value;
 
 typedef enum {
-	OPT_INFO_KEEP_FIRST = 1 << 1,
-	OPT_INFO_KEEP_LAST = 1 << 2,
+	OPT_INFO_NONE = 0,
+	OPT_INFO_KEEP_FIRST = 1 << 0,
+	OPT_INFO_KEEP_LAST = 1 << 1,
+	OPT_INFO_NO_DUPLICATE = 1 << 2,
 	OPT_INFO_REPORT_MISSING = 1 << 3,
-	OPT_INFO_NO_DUPLICATE = 1 << 4, // TODO: Maybe REPORT_DUPLICATE?
 } Opt_Info_Flag;
 
 typedef struct {
@@ -83,6 +84,10 @@ typedef struct {
 	size_t matches_size;
 } Opt_Result;
 
+typedef void (*Opt_Result_Simple_F)(const char *simple);
+
+typedef void (*Opt_Result_Option_F)(Opt_Value value, bool missing);
+
 Opt_Error opt_value_read(Opt_Value *value, const char *base);
 
 void opt_value_print(Opt_Value value);
@@ -93,7 +98,9 @@ void opt_info_help(Opt_Info *opts, size_t opts_len, const char *usage, const cha
 
 void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len);
 
-void opt_result_sort(Opt_Result *result);
+void opt_result_sort(Opt_Result *result, bool sort_opt);
+
+void opt_result_iter(Opt_Result *result, Opt_Result_Simple_F simple_f, Opt_Result_Option_F *opt_fs);
 
 void opt_parser_init(Opt_Parser *parser, Opt_Info *opts, size_t opts_len);
 

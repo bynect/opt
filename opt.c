@@ -156,8 +156,55 @@ static int result_compare(const void *a, const void *b) {
 	return (opt_a > opt_b) - (opt_a < opt_b);
 }
 
-void opt_result_sort(Opt_Result *result) {
-	qsort(result->matches, result->matches_len, sizeof(Opt_Match), result_compare);
+static int result_compare_simple(const void *a, const void *b) {
+	const Opt_Match *match_a = a;
+	const Opt_Match *match_b = b;
+
+	// -1 = less
+	// 0 = equal
+	// 1 = greater
+	if (match_a->kind == OPT_MATCH_SIMPLE) {
+		if (match_b->kind == OPT_MATCH_SIMPLE) return 0;
+		return 1;
+	}
+
+	if (match_b->kind == OPT_MATCH_SIMPLE) return -1;
+
+	assert(match_a->kind == OPT_MATCH_OPTION || match_a->kind == OPT_MATCH_MISSING);
+	assert(match_b->kind == OPT_MATCH_OPTION || match_b->kind == OPT_MATCH_MISSING);
+	return 0;
+}
+
+void opt_result_sort(Opt_Result *result, bool sort_opt) {
+	qsort(result->matches, result->matches_len, sizeof(Opt_Match), sort_opt ? result_compare : result_compare_simple);
+}
+
+void opt_result_iter(Opt_Result *result, Opt_Result_Simple_F simple_f, Opt_Result_Option_F *opt_fs) {
+	assert(simple_f != NULL && opt_fs != NULL);
+	for (size_t i = 0; i < result->matches_len; ++i) {
+		Opt_Match *match = &result->matches[i];
+		switch (match->kind) {
+			case OPT_MATCH_SIMPLE:
+				simple_f(match->simple);
+				break;
+
+			case OPT_MATCH_OPTION:
+				opt_fs[match->option.opt](match->option.value, false);
+				break;
+
+			case OPT_MATCH_MISSING:
+				opt_fs[match->missing_opt](value_none(), true);
+				break;
+
+			default:
+				assert(false && "Unreachable");
+		}
+	}
+}
+
+static inline void result_push(Opt_Result *result, Opt_Match match) {
+	assert((result->matches_len + 1 < result->matches_size) && "Too many matches");
+	result->matches[result->matches_len++] = match;
 }
 
 void opt_parser_init(Opt_Parser *parser, Opt_Info *opts, size_t opts_len) {
@@ -165,11 +212,6 @@ void opt_parser_init(Opt_Parser *parser, Opt_Info *opts, size_t opts_len) {
 	parser->opts_len = opts_len;
 
 	//assert(opts != NULL && opts_len != 0);
-}
-
-static void result_push(Opt_Result *result, Opt_Match match) {
-	assert((result->matches_len + 1 < result->matches_size) && "Too many matches");
-	result->matches[result->matches_len++] = match;
 }
 
 Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **argv, const int argc) {
@@ -222,6 +264,8 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 								memcpy(&result->matches[info->_match], &match, sizeof(Opt_Match));
 								ignore = true;
 								break;
+							} else if (info->flags & OPT_INFO_NO_DUPLICATE) {
+								return error(OPT_ERROR_DUPLICATE_OPTION, (void *)argi);
 							}
 						} else info->_match = result->matches_len;
 						break;
@@ -262,6 +306,8 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 								memcpy(&result->matches[info->_match], &match, sizeof(Opt_Match));
 								ignore = true;
 								break;
+							} else if (info->flags & OPT_INFO_NO_DUPLICATE) {
+								return error(OPT_ERROR_DUPLICATE_OPTION, (void *)argi);
 							}
 						} else info->_match = result->matches_len;
 						break;
