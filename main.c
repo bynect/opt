@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -5,13 +6,39 @@
 
 #define LEN(x) (sizeof(x) / sizeof(*x))
 
-static const char *errs[] = {
-	"OPT_ERROR_NONE",
-	"OPT_ERROR_UNKNOWN_OPTION",
-	"OPT_ERROR_DUPLICATE_OPTION",
-	"OPT_ERROR_MISSING_VALUE",
-	"OPT_ERROR_INVALID_VALUE",
-};
+static void print_error(Opt_Error error) {
+	const char *value[5] = {
+		"",
+		"string",
+		"int",
+		"float"
+		"bool",
+	};
+
+	switch (error.kind) {
+		case OPT_ERROR_NONE:
+			break;
+
+		case OPT_ERROR_UNKNOWN_OPTION:
+			printf("error: unrecognized option %s\n", error.name);
+			break;
+
+		case OPT_ERROR_DUPLICATE_OPTION:
+			printf("error: duplicate option %zu\n", error.option);
+			break;
+
+		case OPT_ERROR_MISSING_VALUE:
+			printf("error: missing value for option %zu, expected %s\n", error.missing.opt, value[error.missing.expected_value]);
+			break;
+
+		case OPT_ERROR_INVALID_VALUE:
+			printf("error: invalid value, expected %s, got '%s'\n", value[error.invalid.expected_value], error.invalid.base);
+			break;
+
+		default:
+			assert(false);
+	}
+}
 
 static void print_result(Opt_Result result) {
 	printf("program: %s\n", result.bin_name);
@@ -31,7 +58,7 @@ static void print_result(Opt_Result result) {
 
 static void check(Opt_Error error) {
 	if (error.kind != OPT_ERROR_NONE) {
-		printf("%s\n", errs[error.kind]);
+		print_error(error);
 		exit(1);
 	}
 }

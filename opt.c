@@ -176,10 +176,11 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 	for (size_t opt = 0; opt < opts_len; ++opt) {
 		Opt_Info *info = &opts[opt];
 
-		const char *value[4] = {
+		const char *value[5] = {
 			"",
 			"string",
 			"int",
+			"float"
 			"bool",
 		};
 
