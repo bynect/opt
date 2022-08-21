@@ -109,18 +109,22 @@ void opt_value_print(Opt_Value value) {
 	}
 }
 
-void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, Opt_Info_Flag flags) {
+void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, const char *value_name, Opt_Info_Flag flags) {
 	info->long_name = long_name;
 	info->long_len = long_name != NULL ? strlen(long_name) : 0;
 	info->short_name = short_name;
 	info->short_len = short_name != NULL ? strlen(short_name) : 0;
 	info->desc = desc;
 	info->value_kind = value_kind;
-	//info->value_name = value_name;
+	info->value_name = value_name;
 	info->flags = flags;
 	info->_seen = 0;
 
 	assert((short_name != NULL || long_name != NULL) && "No name given to option");
+
+	if (flags & OPT_INFO_KEEP_FIRST) assert(!(flags & (OPT_INFO_KEEP_LAST | OPT_INFO_NO_DUPLICATE)) && "Conflicting flags set");
+	if (flags & OPT_INFO_KEEP_LAST) assert(!(flags & (OPT_INFO_KEEP_FIRST | OPT_INFO_NO_DUPLICATE)) && "Conflicting flags set");
+	if (flags & OPT_INFO_NO_DUPLICATE) assert(!(flags & (OPT_INFO_KEEP_FIRST | OPT_INFO_KEEP_LAST)) && "Conflicting flags set");
 }
 
 void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
@@ -128,7 +132,7 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 	size_t line_curr = printf("Usage: %s", bin_name);
 	size_t line_pad = line_curr + 1;
 
-	// NOTE: Prefer short variant, no exclusive options
+	// NOTE: Prefer short variant, no exclusive options or anything fancy
 	for (size_t opt = 0; opt < opts_len; ++opt) {
 		Opt_Info *info = &opts[opt];
 
@@ -143,7 +147,7 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 
 		if (info->short_len != 0) {
 			bool optional = !(info->flags & OPT_INFO_REQUIRED);
-			size_t span = info->short_len + (optional * 4) + strlen(value[info->value_kind]);
+			size_t span = info->short_len + 1 + (optional * 4) + strlen(value[info->value_kind]);
 
 			assert(span < line_max && "Option is too long to fit");
 			if (line_curr + span > line_max) {
@@ -153,12 +157,17 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 
 			if (optional) printf("[ ");
 			printf("-%s", info->short_name);
-			if (info->value_kind != OPT_VALUE_NONE) printf(" %s", value[info->value_kind]);
+
+			if (info->value_kind != OPT_VALUE_NONE) {
+				if (info->value_name != NULL && info->value_name[0] != '\0') printf(" %s", info->value_name);
+				else printf(" %s", value[info->value_kind]);
+			}
+
 			if (optional) printf(" ]");
 			line_curr += span;
 		} else {
 			bool optional = !(info->flags & OPT_INFO_REQUIRED);
-			size_t span = info->long_len + (optional * 4) + strlen(value[info->value_kind]);
+			size_t span = info->long_len + 2 + (optional * 4) + strlen(value[info->value_kind]);
 
 			assert(span < line_max && "Option is too long to fit");
 			if (line_curr + span > line_max) {
@@ -167,8 +176,13 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 			}
 
 			if (optional) printf("[ ");
-			printf("-%s", info->long_name);
-			if (info->value_kind != OPT_VALUE_NONE) printf(" %s", value[info->value_kind]);
+			printf("--%s", info->long_name);
+
+			if (info->value_kind != OPT_VALUE_NONE) {
+				if (info->value_name != NULL && info->value_name[0] != '\0') printf(" %s", info->value_name);
+				else printf(" %s", value[info->value_kind]);
+			}
+
 			if (optional) printf(" ]");
 			line_curr += span;
 		}

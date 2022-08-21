@@ -49,6 +49,7 @@ typedef struct {
 	size_t short_len;
 	const char *desc;
 	Opt_Value_Kind value_kind;
+	const char *value_name;
 	Opt_Info_Flag flags;
 	size_t _seen;
 	size_t _match;
@@ -92,7 +93,7 @@ Opt_Error opt_value_read(Opt_Value *value, const char *base);
 
 void opt_value_print(Opt_Value value);
 
-void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, Opt_Info_Flag flags);
+void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, const char *value_name, Opt_Info_Flag flags);
 
 void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name);
 
