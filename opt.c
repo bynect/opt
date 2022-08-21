@@ -81,6 +81,30 @@ void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len)
 	assert(matches_len != 0);
 }
 
+static int result_compare(const void *a, const void *b) {
+	const Opt_Match *match_a = a;
+	const Opt_Match *match_b = b;
+
+	// -1 = less
+	// 0 = equal
+	// 1 = greater
+	if (match_a->kind == OPT_MATCH_SIMPLE) {
+		if (match_b->kind == OPT_MATCH_SIMPLE) return 0;
+		return 1;
+	}
+
+	if (match_b->kind == OPT_MATCH_SIMPLE) return -1;
+
+	assert(match_a->kind == OPT_MATCH_OPTION && match_b->kind == OPT_MATCH_OPTION);
+	size_t opt_a = match_a->option.opt;
+	size_t opt_b = match_b->option.opt;
+	return (opt_a > opt_b) - (opt_a < opt_b);
+}
+
+void opt_result_sort(Opt_Result *result) {
+	qsort(result->matches, result->matches_len, sizeof(Opt_Match), result_compare);
+}
+
 Opt_Error opt_parser_init(Opt_Parser *parser, Opt_Info *opts, size_t opts_len) {
 	parser->opts = opts;
 	parser->opts_len = opts_len;

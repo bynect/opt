@@ -84,6 +84,8 @@ Opt_Error opt_info_init(Opt_Info *info, const char *long_name, const char *short
 
 void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len);
 
+void opt_result_sort(Opt_Result *result);
+
 Opt_Error opt_parser_init(Opt_Parser *parser, Opt_Info *opts, size_t opts_len);
 
 Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **argv, const int argc);

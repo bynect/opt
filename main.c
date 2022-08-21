@@ -36,6 +36,20 @@ static void print_value(Opt_Value value) {
 	}
 }
 
+static void print_result(Opt_Result result) {
+	printf("program: %s\n", result.program);
+	for (size_t i = 0; i < result.matches_len; ++i) {
+		Opt_Match match = result.matches[i];
+		if (match.kind == OPT_MATCH_SIMPLE) {
+			printf("simple: %s\n", match.simple);
+		} else {
+			printf("option: %zu = ", match.option.opt);
+			print_value(match.option.value);
+			printf("\n");
+		}
+	}
+}
+
 void check(Opt_Error error) {
 	if (error.kind != OPT_ERROR_NONE) {
 		printf("%s\n", errs[error.kind]);
@@ -58,17 +72,14 @@ int main(int argc, const char **argv) {
 
 	check(opt_parser_run(&parser, &result, argv, argc));
 
-	printf("program: %s\n", result.program);
-	for (size_t i = 0; i < result.matches_len; ++i) {
-		Opt_Match match = result.matches[i];
-		if (match.kind == OPT_MATCH_SIMPLE) {
-			printf("simple: %s\n", match.simple);
-		} else {
-			printf("option: %zu = ", match.option.opt);
-			print_value(match.option.value);
-			printf("\n");
-		}
-	}
+
+	printf("Raw result\n");
+	print_result(result);
+
+	opt_result_sort(&result);
+
+	printf("\nSorted result\n");
+	print_result(result);
 
 	return 0;
 }
