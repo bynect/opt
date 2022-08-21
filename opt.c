@@ -7,20 +7,49 @@
 
 #include "opt.h"
 
-static inline Opt_Error error(Opt_Error_Kind kind, void *payload) {
-	return (Opt_Error) {
-		.kind = kind,
-		.payload = payload,
-	};
-}
-
-static inline Opt_Error error_simple(Opt_Error_Kind kind) {
-	return error(kind, NULL);
-}
-
 static inline Opt_Value value_none() {
 	return (Opt_Value) {
 		.kind = OPT_VALUE_NONE,
+	};
+}
+
+static inline Opt_Error error_none() {
+	return (Opt_Error) {
+		.kind = OPT_ERROR_NONE,
+	};
+}
+
+static inline Opt_Error error_unknown(const char *name) {
+	return (Opt_Error) {
+		.kind = OPT_ERROR_UNKNOWN_OPTION,
+		.name = name,
+	};
+}
+
+static inline Opt_Error error_duplicate(size_t option) {
+	return (Opt_Error) {
+		.kind = OPT_ERROR_DUPLICATE_OPTION,
+		.option = option,
+	};
+}
+
+static inline Opt_Error error_missing(size_t opt, Opt_Value_Kind expected_value) {
+	return (Opt_Error) {
+		.kind = OPT_ERROR_MISSING_VALUE,
+		.missing = {
+			.opt = opt,
+			.expected_value = expected_value,
+		},
+	};
+}
+
+static inline Opt_Error error_invalid(Opt_Value_Kind expected_value, const char *base) {
+	return (Opt_Error) {
+		.kind = OPT_ERROR_INVALID_VALUE,
+		.invalid = {
+			.expected_value = expected_value,
+			.base = base,
+		},
 	};
 }
 
@@ -51,23 +80,22 @@ static inline Opt_Match match_missing(size_t opt) {
 static inline Opt_Error int_read(int64_t *vint, const char *base) {
 	char *end = NULL;
 	*vint = strtol(base, &end, 0);
-	if (end[0] != '\0') return error(OPT_ERROR_INVALID_VALUE, (void *)base);
-	return error_simple(OPT_ERROR_NONE);
+	if (end[0] != '\0') return error_invalid(OPT_VALUE_INT, base);
+	return error_none();
 }
 
 static inline Opt_Error float_read(double *vfloat, const char *base) {
 	char *end = NULL;
 	*vfloat = strtod(base, &end);
-	if (end[0] != '\0') return error(OPT_ERROR_INVALID_VALUE, (void *)base);
-	return error_simple(OPT_ERROR_NONE);
+	if (end[0] != '\0') return error_invalid(OPT_VALUE_FLOAT, base);
+	return error_none();
 }
 
 static inline Opt_Error bool_read(bool *vbool, const char *base) {
 	if (!strcmp(base, "t") || !strcmp(base, "T") || !strcmp(base, "true")) *vbool = true;
 	else if (!strcmp(base, "f") || !strcmp(base, "F") || !strcmp(base, "false")) *vbool = false;
-	else return error(OPT_ERROR_INVALID_VALUE, (void *)base);
-
-	return error_simple(OPT_ERROR_NONE);
+	else return error_invalid(OPT_VALUE_BOOL, base);
+	return error_none();
 }
 
 Opt_Error opt_value_read(Opt_Value *value, const char *base) {
@@ -80,21 +108,18 @@ Opt_Error opt_value_read(Opt_Value *value, const char *base) {
 			break;
 
 		case OPT_VALUE_INT:
-			if (base[0] == '\0') return error(OPT_ERROR_MISSING_VALUE, (void *)base);
 			return int_read(&value->vint, base);
 
 		case OPT_VALUE_FLOAT:
-			if (base[0] == '\0') return error(OPT_ERROR_MISSING_VALUE, (void *)base);
 			return float_read(&value->vfloat, base);
 
 		case OPT_VALUE_BOOL:
-			if (base[0] == '\0') return error(OPT_ERROR_MISSING_VALUE, (void *)base);
 			return bool_read(&value->vbool, base);
 
 		default:
 			assert(true && "Unknown value kind");
 	}
-	return error_simple(OPT_ERROR_NONE);
+	return error_none();
 }
 
 void opt_value_print(Opt_Value value) {
@@ -356,13 +381,15 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 							if (base[info->long_len] == '=') {
 								base_value = &base[info->long_len + 1];
 							} else if (arg + 1 < argc) base_value = argv[++arg];
-							else return error(OPT_ERROR_MISSING_VALUE, (void *)argi);
+							else return error_missing(opt, info->value_kind);
 
 							value.kind = info->value_kind;
+							if (base[0] == '\0' && value.kind != OPT_VALUE_STRING) return error_missing(opt, value.kind);
+
 							Opt_Error error = opt_value_read(&value, base_value);
 							if (error.kind != OPT_ERROR_NONE) return error;
 						} else {
-							if (base[info->long_len] != '\0') return error(OPT_ERROR_UNKNOWN_OPTION, (void *)argi);
+							if (base[info->long_len] != '\0') return error_unknown(argi);
 							value = value_none();
 						}
 
@@ -378,7 +405,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 								ignore = true;
 								break;
 							} else if (info->flags & OPT_INFO_NO_DUPLICATE) {
-								return error(OPT_ERROR_DUPLICATE_OPTION, (void *)argi);
+								return error_duplicate(opt);
 							}
 						} else info->_match = result->matches_len;
 						break;
@@ -398,13 +425,15 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 							if (base[info->short_len] == '=') {
 								base_value = &base[info->short_len + 1];
 							} else if (arg + 1 < argc) base_value = argv[++arg];
-							else return error(OPT_ERROR_MISSING_VALUE, (void *)argi);
+							else return error_missing(opt, info->value_kind);
 
 							value.kind = info->value_kind;
+							if (base[0] == '\0' && value.kind != OPT_VALUE_STRING) return error_missing(opt, value.kind);
+
 							Opt_Error error = opt_value_read(&value, base_value);
 							if (error.kind != OPT_ERROR_NONE) return error;
 						} else {
-							if (base[info->short_len] != '\0') return error(OPT_ERROR_UNKNOWN_OPTION, (void *)argi);
+							if (base[info->short_len] != '\0') return error_unknown(argi);
 							value = value_none();
 						}
 
@@ -420,7 +449,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 								ignore = true;
 								break;
 							} else if (info->flags & OPT_INFO_NO_DUPLICATE) {
-								return error(OPT_ERROR_DUPLICATE_OPTION, (void *)argi);
+								return error_duplicate(opt);
 							}
 						} else info->_match = result->matches_len;
 						break;
@@ -429,7 +458,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 			}
 
 			if (ignore) continue;
-			if (!found) return error(OPT_ERROR_UNKNOWN_OPTION, (void *)argi);
+			if (!found) return error_unknown(argi);
 		} else match = match_simple(argi);
 
 		result_push(result, match);
@@ -443,5 +472,5 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 	}
 
 	result->bin_name = argv[0];
-	return error_simple(OPT_ERROR_NONE);
+	return error_none();
 }

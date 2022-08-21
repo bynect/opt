@@ -6,19 +6,6 @@
 #include <stdint.h>
 
 typedef enum {
-	OPT_ERROR_NONE,
-	OPT_ERROR_MISSING_VALUE,
-	OPT_ERROR_UNKNOWN_OPTION,
-	OPT_ERROR_DUPLICATE_OPTION,
-	OPT_ERROR_INVALID_VALUE,
-} Opt_Error_Kind;
-
-typedef struct {
-	Opt_Error_Kind kind;
-	void *payload; // TODO: Change payload
-} Opt_Error;
-
-typedef enum {
 	OPT_VALUE_NONE,
 	OPT_VALUE_STRING,
 	OPT_VALUE_INT,
@@ -37,11 +24,37 @@ typedef struct {
 } Opt_Value;
 
 typedef enum {
+	OPT_ERROR_NONE,
+	OPT_ERROR_UNKNOWN_OPTION,
+	OPT_ERROR_DUPLICATE_OPTION,
+	OPT_ERROR_MISSING_VALUE,
+	OPT_ERROR_INVALID_VALUE,
+} Opt_Error_Kind;
+
+typedef struct {
+	Opt_Error_Kind kind;
+	union {
+		const char *name;
+		size_t option;
+		struct {
+			size_t opt;
+			Opt_Value_Kind expected_value;
+		} missing;
+		struct {
+			Opt_Value_Kind expected_value;
+			const char *base;
+		} invalid;
+	};
+} Opt_Error;
+
+typedef enum {
 	OPT_INFO_NONE = 0,
 	OPT_INFO_KEEP_FIRST = 1 << 0,
 	OPT_INFO_KEEP_LAST = 1 << 1,
 	OPT_INFO_NO_DUPLICATE = 1 << 2,
 	OPT_INFO_REQUIRED = 1 << 3,
+	//OPT_INFO_CAN_STACK = 1 << 4,
+	//OPT_INFO_DEFAULT_VALUE = 1 << 5,
 } Opt_Info_Flag;
 
 typedef struct {
