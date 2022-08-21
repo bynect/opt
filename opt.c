@@ -196,11 +196,6 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 					if (info->long_len == 0) continue;
 					if (!strncmp(base, info->long_name, info->long_len)) {
-						if (info->_seen > 0 && (info->flags & OPT_INFO_KEEP_FIRST)) {
-							ignore = true;
-							break;
-						}
-
 						if (info->value_kind != OPT_VALUE_NONE) {
 							const char *base_value = NULL;
 							if (base[info->long_len] == '=') {
@@ -219,7 +214,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 						match = match_option(opt, value);
 						found = true;
 
-						if (info->_seen > 0) {
+						if (info->_seen++ > 0) {
 							if (info->flags & OPT_INFO_KEEP_FIRST) {
 								ignore = true;
 								break;
@@ -228,10 +223,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 								ignore = true;
 								break;
 							}
-						}
-
-						info->_match = result->matches_len;
-						++info->_seen;
+						} else info->_match = result->matches_len;
 						break;
 					}
 				}
@@ -244,7 +236,6 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 					if (info->short_len == 0) continue;
 					if (!strncmp(base, info->short_name, info->short_len)) {
-
 						if (info->value_kind != OPT_VALUE_NONE) {
 							const char *base_value = NULL;
 							if (base[info->short_len] == '=') {
@@ -263,7 +254,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 						match = match_option(opt, value);
 						found = true;
 
-						if (info->_seen > 0) {
+						if (info->_seen++ > 0) {
 							if (info->flags & OPT_INFO_KEEP_FIRST) {
 								ignore = true;
 								break;
@@ -272,10 +263,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 								ignore = true;
 								break;
 							}
-						}
-
-						info->_match = result->matches_len;
-						++info->_seen;
+						} else info->_match = result->matches_len;
 						break;
 					}
 				}
