@@ -7,13 +7,8 @@
 
 static const char *errs[] = {
 	"OPT_ERROR_NONE",
-	"OPT_ERROR_FULL_MATCHES",
-	"OPT_ERROR_INVALID_MATCHES",
-	"OPT_ERROR_INVALID_OPTS",
-	"OPT_ERROR_MISSING_NAME",
 	"OPT_ERROR_MISSING_VALUE",
 	"OPT_ERROR_UNKNOWN_OPTION",
-	"OPT_ERROR_UNKNOWN_VALUE",
 	"OPT_ERROR_INVALID_VALUE",
 };
 
@@ -66,12 +61,13 @@ int main(int argc, const char **argv) {
 	opt_result_init(&result, matches, LEN(matches));
 
  	Opt_Info opts[3];
-	check(opt_info_init(&opts[0], "verbose", "v", "Set verbose output", OPT_VALUE_NONE, OPT_INFO_COLLAPSE));
-	check(opt_info_init(&opts[1], "", "o", "Set output file path", OPT_VALUE_STRING, OPT_INFO_REPORT_MISSING));
-	check(opt_info_init(&opts[2], "must-write", NULL, "Set must-write flag", OPT_VALUE_BOOL, OPT_INFO_KEEP_LAST));
+	opt_info_init(&opts[0], "verbose", "v", "Set verbose output", OPT_VALUE_NONE, OPT_INFO_COLLAPSE);
+	opt_info_init(&opts[1], "", "o", "Set output file path", OPT_VALUE_STRING, OPT_INFO_REPORT_MISSING);
+	opt_info_init(&opts[2], "must-write", NULL, "Set must-write flag", OPT_VALUE_BOOL, OPT_INFO_KEEP_LAST);
 
 	Opt_Parser parser;
-	check(opt_parser_init(&parser, opts, LEN(opts)));
+	opt_parser_init(&parser, opts, LEN(opts));
+
 	check(opt_parser_run(&parser, &result, argv, argc));
 
 	printf("Raw result\n");

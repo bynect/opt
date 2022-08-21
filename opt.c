@@ -23,13 +23,6 @@ static inline Opt_Value value_none() {
 	};
 }
 
-static inline Opt_Error int_read(int64_t *vint, const char *base) {
-	char *end = NULL;
-	*vint = strtol(base, &end, 0);
-	if (end[0] != '\0') return error(OPT_ERROR_INVALID_VALUE, (void *)base);
-	return error_simple(OPT_ERROR_NONE);
-}
-
 static inline Opt_Match match_simple(const char *simple) {
 	return (Opt_Match) {
 		.kind = OPT_MATCH_SIMPLE,
@@ -54,6 +47,21 @@ static inline Opt_Match match_missing(size_t opt) {
 	};
 }
 
+static inline Opt_Error int_read(int64_t *vint, const char *base) {
+	char *end = NULL;
+	*vint = strtol(base, &end, 0);
+	if (end[0] != '\0') return error(OPT_ERROR_INVALID_VALUE, (void *)base);
+	return error_simple(OPT_ERROR_NONE);
+}
+
+static inline Opt_Error bool_read(bool *vbool, const char *base) {
+	if (!strcmp(base, "t") || !strcmp(base, "T") || !strcmp(base, "true")) *vbool = true;
+	else if (!strcmp(base, "f") || !strcmp(base, "F") || !strcmp(base, "false")) *vbool = false;
+	else return error(OPT_ERROR_INVALID_VALUE, (void *)base);
+
+	return error_simple(OPT_ERROR_NONE);
+}
+
 Opt_Error opt_value_read(Opt_Value *value, const char *base) {
 	switch (value->kind) {
 		case OPT_VALUE_NONE:
@@ -69,19 +77,15 @@ Opt_Error opt_value_read(Opt_Value *value, const char *base) {
 
 		case OPT_VALUE_BOOL:
 			if (base[0] == '\0') return error(OPT_ERROR_MISSING_VALUE, (void *)base);
-
-			if (!strcmp(base, "t") || !strcmp(base, "T") || !strcmp(base, "true")) value->vbool = true;
-			else if (!strcmp(base, "f") || !strcmp(base, "F") || !strcmp(base, "false")) value->vbool = false;
-			else return error(OPT_ERROR_UNKNOWN_VALUE, (void *)base);
-			break;
+			return bool_read(&value->vbool, base);
 
 		default:
-			return error_simple(OPT_ERROR_UNKNOWN_VALUE);
+			assert(true && "Unknown value kind");
 	}
 	return error_simple(OPT_ERROR_NONE);
 }
 
-Opt_Error opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, Opt_Info_Flag flags) {
+void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, Opt_Info_Flag flags) {
 	info->long_name = long_name;
 	info->long_len = long_name != NULL ? strlen(long_name) : 0;
 	info->short_name = short_name;
@@ -91,20 +95,16 @@ Opt_Error opt_info_init(Opt_Info *info, const char *long_name, const char *short
 	info->flags = flags;
 	info->_seen = 0;
 
-	return (short_name != NULL || long_name != NULL)
-		? error_simple(OPT_ERROR_NONE)
-		: error(OPT_ERROR_MISSING_NAME, info);
+	assert((short_name != NULL || long_name != NULL) && "No name given to option");
 }
 
-Opt_Error opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len) {
+void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len) {
 	result->bin_name = NULL;
 	result->matches = matches;
 	result->matches_len = 0;
 	result->matches_size = matches_len;
 
-	return (matches != NULL && matches_len != 0)
-		? error_simple(OPT_ERROR_NONE)
-		: error(OPT_ERROR_INVALID_MATCHES, (void *)matches);
+	assert((matches != NULL && matches_len != 0) && "Matches pool empty");
 }
 
 static int result_compare(const void *a, const void *b) {
@@ -133,22 +133,16 @@ void opt_result_sort(Opt_Result *result) {
 	qsort(result->matches, result->matches_len, sizeof(Opt_Match), result_compare);
 }
 
-Opt_Error opt_parser_init(Opt_Parser *parser, Opt_Info *opts, size_t opts_len) {
+void opt_parser_init(Opt_Parser *parser, Opt_Info *opts, size_t opts_len) {
 	parser->opts = opts;
 	parser->opts_len = opts_len;
 
-	return (opts != NULL && opts_len != 0)
-		? error_simple(OPT_ERROR_NONE)
-		: error(OPT_ERROR_INVALID_OPTS, opts);
+	//assert(opts != NULL && opts_len != 0);
 }
 
-static Opt_Error result_push(Opt_Result *result, Opt_Match match) {
-	if (result->matches_len + 1 >= result->matches_size) {
-		return error_simple(OPT_ERROR_FULL_MATCHES);
-	}
-
+static void result_push(Opt_Result *result, Opt_Match match) {
+	assert((result->matches_len + 1 < result->matches_size) && "Too many matches");
 	result->matches[result->matches_len++] = match;
-	return error_simple(OPT_ERROR_NONE);
 }
 
 Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **argv, const int argc) {
@@ -264,15 +258,13 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 			if (!found) return error(OPT_ERROR_UNKNOWN_OPTION, (void *)argi);
 		} else match = match_simple(argi);
 
-		Opt_Error error = result_push(result, match);
-		if (error.kind != OPT_ERROR_NONE) return error;
+		result_push(result, match);
 	}
 
 	for (size_t opt = 0; opt < parser->opts_len; ++opt) {
 		Opt_Info *info = &parser->opts[opt];
 		if ((info->flags & OPT_INFO_REPORT_MISSING) && info->_seen == 0) {
-			Opt_Error error = result_push(result, match_missing(opt));
-			if (error.kind != OPT_ERROR_NONE) return error;
+			result_push(result, match_missing(opt));
 		}
 	}
 
