@@ -26,7 +26,7 @@ static Opt_Value value_none() {
 static inline Opt_Error int_read(int64_t *vint, const char *base) {
 	char *end = NULL;
 	*vint = strtol(base, &end, 0);
-	if (end[0] != '\0') return error(OPT_ERROR_MALFORMED_VALUE, (void *)base);
+	if (end[0] != '\0') return error(OPT_ERROR_INVALID_VALUE, (void *)base);
 	return error_simple(OPT_ERROR_NONE);
 }
 
@@ -141,7 +141,7 @@ Opt_Error opt_parser_init(Opt_Parser *parser, Opt_Info *opts, size_t opts_len) {
 
 static Opt_Error result_push(Opt_Result *result, Opt_Match match) {
 	if (result->matches_len + 1 >= result->matches_size) {
-		return error_simple(OPT_ERROR_MATCHES_FULL);
+		return error_simple(OPT_ERROR_FULL_MATCHES);
 	}
 
 	result->matches[result->matches_len++] = match;
@@ -188,7 +188,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 							Opt_Error error = opt_value_read(&value, base_value);
 							if (error.kind != OPT_ERROR_NONE) return error;
 						} else {
-							if (base[info->long_len] != '\0') return error(OPT_ERROR_MALFORMED_ARG, (void *)argi);
+							if (base[info->long_len] != '\0') return error(OPT_ERROR_UNKNOWN_OPTION, (void *)argi);
 							value = value_none();
 						}
 
@@ -234,7 +234,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 							Opt_Error error = opt_value_read(&value, base_value);
 							if (error.kind != OPT_ERROR_NONE) return error;
 						} else {
-							if (base[info->short_len] != '\0') return error(OPT_ERROR_MALFORMED_ARG, (void *)argi);
+							if (base[info->short_len] != '\0') return error(OPT_ERROR_UNKNOWN_OPTION, (void *)argi);
 							value = value_none();
 						}
 
