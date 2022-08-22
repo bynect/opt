@@ -101,7 +101,13 @@ int main(int argc, const char **argv) {
 
 	printf("\n");
 	if (result.matches[0].kind == OPT_MATCH_OPTION && result.matches[0].option.opt == 0) {
-		opt_info_help(opts, LEN(opts), result.bin_name, "Options:", NULL);
+		const char *args[] = { "file1", "file2" };
+		Opt_Usage usage = {
+			.name = result.bin_name,
+			.args = args,
+			.args_len = LEN(args),
+		};
+		opt_info_help(opts, LEN(opts), NULL, NULL, &usage);
 	}
 
 	return 0;

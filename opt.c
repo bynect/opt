@@ -170,29 +170,35 @@ void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name
 	if (flags & OPT_INFO_NO_DUPLICATE) assert(!(flags & (OPT_INFO_KEEP_FIRST | OPT_INFO_KEEP_LAST)) && "Conflicting flags set");
 }
 
-void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
+void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage) {
+	assert(usage != NULL && "Missing usage info");
+
 	const size_t line_max = 80;
-	size_t line_curr = printf("Usage: %s", bin_name);
+	size_t line_curr = 0;
+
+	line_curr += printf("Usage: %s", usage->name);
 	size_t line_pad = line_curr + 1;
 
 	const char *value[5] = { "", "string", "int", "float", "bool" };
 
-	// NOTE: Prefer short variant, no exclusive options or anything fancy
 	for (size_t opt = 0; opt < opts_len; ++opt) {
 		Opt_Info *info = &opts[opt];
 
-		bool optional = !(info->flags & OPT_INFO_REQUIRED);
-		size_t value_span = strlen(info->value_name != NULL && info->value_name[0] != '\0' ? info->value_name :  value[info->value_kind]);
+		size_t span = strlen(info->value_name != NULL && info->value_name[0] != '\0' ? info->value_name :  value[info->value_kind]);
 
-		printf(" ");
+		bool optional = !(info->flags & OPT_INFO_REQUIRED);
+		span += (optional * 4);
+
+		line_curr += printf(" ");
 
 		if (info->short_len != 0) {
-			size_t span = info->long_len + 2 + (optional * 4) + value_span;
+			span += info->long_len + 1;
 			assert(span < line_max && "Option is too long to fit");
 
 			if (line_curr + span > line_max) {
 				printf("\n");
 				for (size_t i = 0; i < line_pad; ++i) putchar(' ');
+				line_curr = line_pad;
 			}
 
 			if (optional) printf("[ ");
@@ -206,12 +212,13 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 			if (optional) printf(" ]");
 			line_curr += span;
 		} else {
-			size_t span = info->long_len + 2 + (optional * 4) + value_span;
+			span += info->long_len + 2;
 			assert(span < line_max && "Option is too long to fit");
 
 			if (line_curr + span > line_max) {
 				printf("\n");
 				for (size_t i = 0; i < line_pad; ++i) putchar(' ');
+				line_curr = line_pad;
 			}
 
 			if (optional) printf("[ ");
@@ -227,39 +234,48 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 		}
 	}
 
+	for (size_t arg = 0; arg < usage->args_len; ++arg) {
+		size_t span = strlen(usage->args[arg]);
+		assert(span < line_max && "Option is too long to fit");
+
+		line_curr += printf(" ");
+
+		if (line_curr + span > line_max) {
+			printf("\n");
+			for (size_t i = 0; i < line_pad; ++i) putchar(' ');
+			line_curr = line_pad;
+		}
+
+		printf("%s", usage->args[arg]);
+		line_curr += span;
+	}
+
 	printf("\n");
 }
 
-void opt_info_help(Opt_Info *opts, size_t opts_len, const char *bin_name, const char *head_note, const char *foot_note) {
-	if (bin_name != NULL) opt_info_usage(opts, opts_len, bin_name);
-	if (head_note != NULL) printf("%s\n", head_note);
+void opt_info_help(Opt_Info *opts, size_t opts_len, const char *head_note, const char *foot_note, Opt_Usage *usage) {
+	if (usage != NULL) opt_info_usage(opts, opts_len, usage);
+
+	printf("%s\n", (head_note == NULL || head_note[0] == '\0') ? "Options:" : head_note);
 
 	for (size_t opt = 0; opt < opts_len; ++opt) {
 		Opt_Info *info = &opts[opt];
 
 		size_t padding = 20;
-		printf("  ");
+		padding -= printf("  ");
 
 		if (info->long_len != 0) {
-			printf("--%s", info->long_name);
-			padding -= info->long_len + 2;
-
-			if (info->short_len != 0) {
-				printf(", ");
-				padding -= 2;
-			}
+			padding -= printf("--%s", info->long_name);
+			if (info->short_len != 0) padding -= printf(", ");
 		}
 
-		if (info->short_len != 0) {
-			printf("-%s", info->short_name);
-			padding -= info->short_len + 1;
-		}
+		if (info->short_len != 0) padding -= printf("-%s", info->short_name);
 
 		for (size_t i = 0; i < padding; ++i) putchar(' ');
-		printf("%s\n", info->desc);
+		printf("%s\n", info->desc != NULL ? info->desc : "");
 	}
 
-	if (foot_note != NULL) printf("%s\n", foot_note);
+	if (foot_note != NULL && foot_note[0] != '\0') printf("%s\n", foot_note);
 }
 
 void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len) {

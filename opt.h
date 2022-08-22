@@ -78,6 +78,12 @@ typedef struct {
 	size_t opts_len;
 } Opt_Parser;
 
+typedef struct {
+	const char *name;
+	const char **args;
+	size_t args_len;
+} Opt_Usage;
+
 typedef enum {
 	OPT_MATCH_SIMPLE,
 	OPT_MATCH_OPTION,
@@ -113,9 +119,9 @@ void opt_value_print(Opt_Value value);
 
 void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, const char *value_name, Opt_Info_Flag flags);
 
-void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name);
+void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage);
 
-void opt_info_help(Opt_Info *opts, size_t opts_len, const char *bin_name, const char *head_note, const char *foot_note);
+void opt_info_help(Opt_Info *opts, size_t opts_len, const char *head_note, const char *foot_note, Opt_Usage *usage);
 
 void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len);
 
