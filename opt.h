@@ -34,8 +34,11 @@ typedef enum {
 typedef struct {
 	Opt_Error_Kind kind;
 	union {
-		const char *name;
-		size_t option;
+		const char *unknown_opt;
+		struct {
+			size_t opt;
+			Opt_Value value;
+		} duplicate;
 		struct {
 			size_t opt;
 			Opt_Value_Kind expected_value;

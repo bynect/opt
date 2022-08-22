@@ -22,14 +22,17 @@ static inline Opt_Error error_none() {
 static inline Opt_Error error_unknown(const char *name) {
 	return (Opt_Error) {
 		.kind = OPT_ERROR_UNKNOWN_OPTION,
-		.name = name,
+		.unknown_opt = name,
 	};
 }
 
-static inline Opt_Error error_duplicate(size_t option) {
+static inline Opt_Error error_duplicate(size_t opt, Opt_Value value) {
 	return (Opt_Error) {
 		.kind = OPT_ERROR_DUPLICATE_OPTION,
-		.option = option,
+		.duplicate = {
+			.opt = opt,
+			.value = value,
+		},
 	};
 }
 
@@ -406,7 +409,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 								ignore = true;
 								break;
 							} else if (info->flags & OPT_INFO_NO_DUPLICATE) {
-								return error_duplicate(opt);
+								return error_duplicate(opt, value);
 							}
 						} else info->_match = result->matches_len;
 						break;
@@ -450,7 +453,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 								ignore = true;
 								break;
 							} else if (info->flags & OPT_INFO_NO_DUPLICATE) {
-								return error_duplicate(opt);
+								return error_duplicate(opt, value);
 							}
 						} else info->_match = result->matches_len;
 						break;

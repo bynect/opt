@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -6,7 +7,12 @@
 
 #define LEN(x) (sizeof(x) / sizeof(*x))
 
-static void print_error(Opt_Error error) {
+static void print_option(size_t opt, Opt_Info *opts) {
+	if (opts[opt].long_len != 0) printf("--%s", opts[opt].long_name);
+	else printf("-%s", opts[opt].short_name);
+}
+
+static void print_error(Opt_Error error, Opt_Info *opts) {
 	const char *value[5] = {
 		"",
 		"string",
@@ -20,15 +26,23 @@ static void print_error(Opt_Error error) {
 			break;
 
 		case OPT_ERROR_UNKNOWN_OPTION:
-			printf("error: unrecognized option %s\n", error.name);
+			printf("error: unrecognized option %s\n", error.unknown_opt);
 			break;
 
 		case OPT_ERROR_DUPLICATE_OPTION:
-			printf("error: duplicate option %zu\n", error.option);
+			printf("error: duplicate option ");
+			print_option(error.duplicate.opt, opts);
+			if (error.duplicate.value.kind != OPT_VALUE_NONE) {
+				putchar(' ');
+				opt_value_print(error.duplicate.value);
+			}
+			putchar('\n');
 			break;
 
 		case OPT_ERROR_MISSING_VALUE:
-			printf("error: missing value for option %zu, expected %s\n", error.missing.opt, value[error.missing.expected_value]);
+			printf("error: missing value for option ");
+			print_option(error.missing.opt, opts);
+			printf(", expected %s\n", value[error.missing.expected_value]);
 			break;
 
 		case OPT_ERROR_INVALID_VALUE:
@@ -56,13 +70,6 @@ static void print_result(Opt_Result result) {
 	}
 }
 
-static void check(Opt_Error error) {
-	if (error.kind != OPT_ERROR_NONE) {
-		print_error(error);
-		exit(1);
-	}
-}
-
 int main(int argc, const char **argv) {
 	Opt_Result result;
 	Opt_Match matches[10];
@@ -78,7 +85,11 @@ int main(int argc, const char **argv) {
 	Opt_Parser parser;
 	opt_parser_init(&parser, opts, LEN(opts));
 
-	check(opt_parser_run(&parser, &result, argv, argc));
+	Opt_Error error = opt_parser_run(&parser, &result, argv, argc);
+	if (error.kind != OPT_ERROR_NONE) {
+		print_error(error, opts);
+		exit(1);
+	}
 
 	printf("Raw result\n");
 	print_result(result);
