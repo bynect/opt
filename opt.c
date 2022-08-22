@@ -237,8 +237,8 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 	printf("\n");
 }
 
-void opt_info_help(Opt_Info *opts, size_t opts_len, const char *usage, const char *head_note, const char *foot_note) {
-	printf("%s\n", usage);
+void opt_info_help(Opt_Info *opts, size_t opts_len, const char *bin_name, const char *head_note, const char *foot_note) {
+	if (bin_name != NULL) opt_info_usage(opts, opts_len, bin_name);
 	if (head_note != NULL) printf("%s\n", head_note);
 
 	for (size_t opt = 0; opt < opts_len; ++opt) {

@@ -101,10 +101,7 @@ int main(int argc, const char **argv) {
 
 	printf("\n");
 	if (result.matches[0].kind == OPT_MATCH_OPTION && result.matches[0].option.opt == 0) {
-		opt_info_help(opts, LEN(opts), "Usage: x [options]", NULL, NULL);
-
-		printf("\n");
-		opt_info_usage(opts, LEN(opts), result.bin_name);
+		opt_info_help(opts, LEN(opts), result.bin_name, "Options:", NULL);
 	}
 
 	return 0;

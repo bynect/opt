@@ -115,7 +115,7 @@ void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name
 
 void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name);
 
-void opt_info_help(Opt_Info *opts, size_t opts_len, const char *usage, const char *head_note, const char *foot_note);
+void opt_info_help(Opt_Info *opts, size_t opts_len, const char *bin_name, const char *head_note, const char *foot_note);
 
 void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len);
 
