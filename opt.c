@@ -183,7 +183,7 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 			"",
 			"string",
 			"int",
-			"float"
+			"float",
 			"bool",
 		};
 
@@ -191,7 +191,8 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 
 		if (info->short_len != 0) {
 			bool optional = !(info->flags & OPT_INFO_REQUIRED);
-			size_t span = info->short_len + 1 + (optional * 4) + strlen(value[info->value_kind]);
+			size_t value_span = strlen(info->value_name != NULL && info->value_name[0] != '\0' ? info->value_name :  value[info->value_kind]);
+			size_t span = info->long_len + 2 + (optional * 4) + value_span;
 
 			assert(span < line_max && "Option is too long to fit");
 			if (line_curr + span > line_max) {
@@ -211,7 +212,8 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 			line_curr += span;
 		} else {
 			bool optional = !(info->flags & OPT_INFO_REQUIRED);
-			size_t span = info->long_len + 2 + (optional * 4) + strlen(value[info->value_kind]);
+			size_t value_span = strlen(info->value_name != NULL && info->value_name[0] != '\0' ? info->value_name :  value[info->value_kind]);
+			size_t span = info->long_len + 2 + (optional * 4) + value_span;
 
 			assert(span < line_max && "Option is too long to fit");
 			if (line_curr + span > line_max) {
