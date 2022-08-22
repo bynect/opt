@@ -175,26 +175,21 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 	size_t line_curr = printf("Usage: %s", bin_name);
 	size_t line_pad = line_curr + 1;
 
+	const char *value[5] = { "", "string", "int", "float", "bool" };
+
 	// NOTE: Prefer short variant, no exclusive options or anything fancy
 	for (size_t opt = 0; opt < opts_len; ++opt) {
 		Opt_Info *info = &opts[opt];
 
-		const char *value[5] = {
-			"",
-			"string",
-			"int",
-			"float",
-			"bool",
-		};
+		bool optional = !(info->flags & OPT_INFO_REQUIRED);
+		size_t value_span = strlen(info->value_name != NULL && info->value_name[0] != '\0' ? info->value_name :  value[info->value_kind]);
 
 		printf(" ");
 
 		if (info->short_len != 0) {
-			bool optional = !(info->flags & OPT_INFO_REQUIRED);
-			size_t value_span = strlen(info->value_name != NULL && info->value_name[0] != '\0' ? info->value_name :  value[info->value_kind]);
 			size_t span = info->long_len + 2 + (optional * 4) + value_span;
-
 			assert(span < line_max && "Option is too long to fit");
+
 			if (line_curr + span > line_max) {
 				printf("\n");
 				for (size_t i = 0; i < line_pad; ++i) putchar(' ');
@@ -211,11 +206,9 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, const char *bin_name) {
 			if (optional) printf(" ]");
 			line_curr += span;
 		} else {
-			bool optional = !(info->flags & OPT_INFO_REQUIRED);
-			size_t value_span = strlen(info->value_name != NULL && info->value_name[0] != '\0' ? info->value_name :  value[info->value_kind]);
 			size_t span = info->long_len + 2 + (optional * 4) + value_span;
-
 			assert(span < line_max && "Option is too long to fit");
+
 			if (line_curr + span > line_max) {
 				printf("\n");
 				for (size_t i = 0; i < line_pad; ++i) putchar(' ');
