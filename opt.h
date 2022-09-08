@@ -56,7 +56,7 @@ typedef enum {
 	OPT_INFO_MATCH_NONE = 1 << 0,
 	OPT_INFO_MATCH_FIRST = 1 << 1,
 	OPT_INFO_MATCH_LAST = 1 << 2,
-	OPT_INFO_MATCH_MISSING = 1 << 3,
+	OPT_INFO_MATCH_MISSING = 1 << 3, // NOTE: Easy to mistake with OPT_MATCH_INFO
 	OPT_INFO_STOP_DUPLICATE = 1 << 4,
 	OPT_INFO_STOP_PARSER = 1 << 5,
 	//OPT_INFO_STACK,
@@ -121,7 +121,7 @@ typedef void (*Opt_Result_Option_F)(Opt_Value value, bool missing);
 
 Opt_Error opt_value_read(Opt_Value *value, const char *base);
 
-void opt_value_print(Opt_Value value);
+void opt_value_print(Opt_Value value, FILE *file);
 
 void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, const char *value_name, Opt_Info_Flag flags);
 

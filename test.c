@@ -34,7 +34,7 @@ static void print_error(Opt_Error error, Opt_Info *opts) {
 			print_option(error.duplicate.opt, opts);
 			if (error.duplicate.value.kind != OPT_VALUE_NONE) {
 				putchar(' ');
-				opt_value_print(error.duplicate.value);
+				opt_value_print(error.duplicate.value, stdout);
 			}
 			putchar('\n');
 			break;
@@ -62,7 +62,7 @@ static void print_result(Opt_Result result) {
 			printf("simple: %s\n", match.simple);
 		} else if (match.kind == OPT_MATCH_OPTION) {
 			printf("option: %zu = ", match.option.opt);
-			opt_value_print(match.option.value);
+			opt_value_print(match.option.value, stdout);
 			printf("\n");
 		} else {
 			printf("missing: %zu\n", match.missing_opt);

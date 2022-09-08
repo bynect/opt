@@ -125,7 +125,7 @@ Opt_Error opt_value_read(Opt_Value *value, const char *base) {
 	return error_none();
 }
 
-void opt_value_print(Opt_Value value) {
+void opt_value_print(Opt_Value value, FILE *file) {
 	switch (value.kind) {
 		case OPT_VALUE_NONE:
 			fprintf(file, "none");
@@ -184,13 +184,13 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage, FILE *fil
 
 		size_t span = strlen(info->value_name != NULL && info->value_name[0] != '\0' ? info->value_name :  value[info->value_kind]);
 
-		bool optional = !(info->flags & OPT_MATCH_MISSING);
+		bool optional = !(info->flags & OPT_INFO_MATCH_MISSING);
 		span += (optional * 4);
 
 		line_curr += fprintf(file, " ");
 
 		if (info->short_len != 0) {
-			span += info->long_len + 1;
+			span += info->short_len + 1;
 			assert(span < usage->line_max && "Option is too long to fit");
 
 			if (line_curr + span > usage->line_max) {
@@ -508,7 +508,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 	for (size_t opt = 0; opt < parser->opts_len; ++opt) {
 		Opt_Info *info = &parser->opts[opt];
-		if (info->_seen == 0 && info->flags & OPT_MATCH_MISSING) {
+		if (info->_seen == 0 && info->flags & OPT_INFO_MATCH_MISSING) {
 			++result->missing;
 			result_push(result, match_missing(opt));
 		}
