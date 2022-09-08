@@ -165,18 +165,16 @@ void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name
 
 	assert((short_name != NULL || long_name != NULL) && "No name given to option");
 
-	if (flags & OPT_INFO_KEEP_FIRST) assert(!(flags & (OPT_INFO_KEEP_LAST | OPT_INFO_NO_DUPLICATE)) && "Conflicting flags set");
-	if (flags & OPT_INFO_KEEP_LAST) assert(!(flags & (OPT_INFO_KEEP_FIRST | OPT_INFO_NO_DUPLICATE)) && "Conflicting flags set");
-	if (flags & OPT_INFO_NO_DUPLICATE) assert(!(flags & (OPT_INFO_KEEP_FIRST | OPT_INFO_KEEP_LAST)) && "Conflicting flags set");
+	if (flags & OPT_INFO_MATCH_FIRST) assert(!(flags & (OPT_INFO_MATCH_LAST | OPT_INFO_STOP_DUPLICATE)) && "Conflicting flags set");
+	if (flags & OPT_INFO_MATCH_LAST) assert(!(flags & (OPT_INFO_MATCH_FIRST | OPT_INFO_STOP_DUPLICATE)) && "Conflicting flags set");
+	if (flags & OPT_INFO_STOP_DUPLICATE) assert(!(flags & (OPT_INFO_MATCH_FIRST | OPT_INFO_MATCH_LAST)) && "Conflicting flags set");
 }
 
 void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage) {
 	assert(usage != NULL && "Missing usage info");
+	assert(usage->line_max != 0);
 
-	const size_t line_max = 80;
-	size_t line_curr = 0;
-
-	line_curr += printf("Usage: %s", usage->name);
+	size_t line_curr = printf("Usage: %s", usage->name);
 	size_t line_pad = line_curr + 1;
 
 	const char *value[5] = { "", "string", "int", "float", "bool" };
@@ -186,16 +184,16 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage) {
 
 		size_t span = strlen(info->value_name != NULL && info->value_name[0] != '\0' ? info->value_name :  value[info->value_kind]);
 
-		bool optional = !(info->flags & OPT_INFO_REQUIRED);
+		bool optional = !(info->flags & OPT_MATCH_MISSING);
 		span += (optional * 4);
 
 		line_curr += printf(" ");
 
 		if (info->short_len != 0) {
 			span += info->long_len + 1;
-			assert(span < line_max && "Option is too long to fit");
+			assert(span < usage->line_max && "Option is too long to fit");
 
-			if (line_curr + span > line_max) {
+			if (line_curr + span > usage->line_max) {
 				printf("\n");
 				for (size_t i = 0; i < line_pad; ++i) putchar(' ');
 				line_curr = line_pad;
@@ -213,9 +211,9 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage) {
 			line_curr += span;
 		} else {
 			span += info->long_len + 2;
-			assert(span < line_max && "Option is too long to fit");
+			assert(span < usage->line_max && "Option is too long to fit");
 
-			if (line_curr + span > line_max) {
+			if (line_curr + span > usage->line_max) {
 				printf("\n");
 				for (size_t i = 0; i < line_pad; ++i) putchar(' ');
 				line_curr = line_pad;
@@ -236,11 +234,11 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage) {
 
 	for (size_t arg = 0; arg < usage->args_len; ++arg) {
 		size_t span = strlen(usage->args[arg]);
-		assert(span < line_max && "Option is too long to fit");
+		assert(span < usage->line_max && "Option is too long to fit");
 
 		line_curr += printf(" ");
 
-		if (line_curr + span > line_max) {
+		if (line_curr + span > usage->line_max) {
 			printf("\n");
 			for (size_t i = 0; i < line_pad; ++i) putchar(' ');
 			line_curr = line_pad;
@@ -368,7 +366,9 @@ void opt_parser_init(Opt_Parser *parser, Opt_Info *opts, size_t opts_len) {
 }
 
 Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **argv, const int argc) {
+	result->bin_name = argv[0];
 	bool no_opt = false;
+
 	for (int arg = 1; arg < argc; ++arg) {
 		const char *argi = argv[arg];
 		Opt_Match match = { 0 };
@@ -408,18 +408,28 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 							value = value_none();
 						}
 
+						if (info->flags & OPT_INFO_MATCH_NONE) {
+							ignore = true;
+							break;
+						}
+
 						match = match_option(opt, value);
 						found = true;
 
+						if (info->flags & OPT_INFO_STOP_PARSER) {
+							result_push(result, match);
+							return error_none();
+						}
+
 						if (info->_seen++ > 0) {
-							if (info->flags & OPT_INFO_KEEP_FIRST) {
+							if (info->flags & OPT_INFO_MATCH_FIRST) {
 								ignore = true;
 								break;
-							} else if (info->flags & OPT_INFO_KEEP_LAST) {
+							} else if (info->flags & OPT_INFO_MATCH_LAST) {
 								memcpy(&result->matches[info->_match], &match, sizeof(Opt_Match));
 								ignore = true;
 								break;
-							} else if (info->flags & OPT_INFO_NO_DUPLICATE) {
+							} else if (info->flags & OPT_INFO_STOP_DUPLICATE) {
 								return error_duplicate(opt, value);
 							}
 						} else info->_match = result->matches_len;
@@ -452,18 +462,28 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 							value = value_none();
 						}
 
+						if (info->flags & OPT_INFO_MATCH_NONE) {
+							ignore = true;
+							break;
+						}
+
 						match = match_option(opt, value);
 						found = true;
 
+						if (info->flags & OPT_INFO_STOP_PARSER) {
+							result_push(result, match);
+							return error_none();
+						}
+
 						if (info->_seen++ > 0) {
-							if (info->flags & OPT_INFO_KEEP_FIRST) {
+							if (info->flags & OPT_INFO_MATCH_FIRST) {
 								ignore = true;
 								break;
-							} else if (info->flags & OPT_INFO_KEEP_LAST) {
+							} else if (info->flags & OPT_INFO_MATCH_LAST) {
 								memcpy(&result->matches[info->_match], &match, sizeof(Opt_Match));
 								ignore = true;
 								break;
-							} else if (info->flags & OPT_INFO_NO_DUPLICATE) {
+							} else if (info->flags & OPT_INFO_STOP_DUPLICATE) {
 								return error_duplicate(opt, value);
 							}
 						} else info->_match = result->matches_len;
@@ -481,11 +501,9 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 	for (size_t opt = 0; opt < parser->opts_len; ++opt) {
 		Opt_Info *info = &parser->opts[opt];
-		if ((info->flags & OPT_INFO_REQUIRED) && info->_seen == 0) {
-			result_push(result, match_missing(opt));
-		}
+		if (info->_seen == 0) continue;
+		if (info->flags & OPT_MATCH_MISSING) result_push(result, match_missing(opt));
 	}
 
-	result->bin_name = argv[0];
 	return error_none();
 }

@@ -52,12 +52,13 @@ typedef struct {
 
 typedef enum {
 	OPT_INFO_NONE = 0,
-	OPT_INFO_KEEP_FIRST = 1 << 0,
-	OPT_INFO_KEEP_LAST = 1 << 1,
-	OPT_INFO_NO_DUPLICATE = 1 << 2,
-	OPT_INFO_REQUIRED = 1 << 3,
-	//OPT_INFO_CAN_STACK = 1 << 4,
-	//OPT_INFO_DEFAULT_VALUE = 1 << 5,
+	OPT_INFO_MATCH_NONE = 1 << 0,
+	OPT_INFO_MATCH_FIRST = 1 << 1,
+	OPT_INFO_MATCH_LAST = 1 << 2,
+	OPT_INFO_MATCH_MISSING = 1 << 3,
+	OPT_INFO_STOP_DUPLICATE = 1 << 4,
+	OPT_INFO_STOP_PARSER = 1 << 5,
+	//OPT_INFO_STACK,
 } Opt_Info_Flag;
 
 typedef struct {
@@ -82,6 +83,7 @@ typedef struct {
 	const char *name;
 	const char **args;
 	size_t args_len;
+	size_t line_max;
 } Opt_Usage;
 
 typedef enum {

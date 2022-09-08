@@ -76,11 +76,11 @@ int main(int argc, const char **argv) {
 	opt_result_init(&result, matches, LEN(matches));
 
 	Opt_Info opts[5];
-	opt_info_init(&opts[0], "help", "h", "Show help information", OPT_VALUE_NONE, NULL, OPT_INFO_KEEP_FIRST);
-	opt_info_init(&opts[1], "verbose", "v", "Set verbose output", OPT_VALUE_NONE, NULL, OPT_INFO_KEEP_FIRST);
-	opt_info_init(&opts[2], "", "o", "Set output file path", OPT_VALUE_STRING, "FILE", OPT_INFO_REQUIRED);
-	opt_info_init(&opts[3], "must-write", NULL, "Set must-write flag", OPT_VALUE_BOOL, NULL, OPT_INFO_KEEP_LAST);
-	opt_info_init(&opts[4], "number", NULL, "Set number", OPT_VALUE_INT, NULL, OPT_INFO_NO_DUPLICATE);
+	opt_info_init(&opts[0], "help", "h", "Show help information", OPT_VALUE_NONE, NULL, OPT_INFO_STOP_PARSER);
+	opt_info_init(&opts[1], "verbose", "v", "Set verbose output", OPT_VALUE_NONE, NULL, OPT_INFO_MATCH_FIRST);
+	opt_info_init(&opts[2], "", "o", "Set output file path", OPT_VALUE_STRING, "FILE", OPT_INFO_MATCH_MISSING);
+	opt_info_init(&opts[3], "must-write", NULL, "Set must-write flag", OPT_VALUE_BOOL, NULL, OPT_INFO_MATCH_LAST);
+	opt_info_init(&opts[4], "number", NULL, "Set number", OPT_VALUE_INT, NULL, OPT_INFO_STOP_DUPLICATE);
 
 	Opt_Parser parser;
 	opt_parser_init(&parser, opts, LEN(opts));
@@ -106,6 +106,7 @@ int main(int argc, const char **argv) {
 			.name = result.bin_name,
 			.args = args,
 			.args_len = LEN(args),
+			.line_max = 90,
 		};
 		opt_info_help(opts, LEN(opts), NULL, NULL, &usage);
 	}
