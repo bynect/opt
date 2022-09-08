@@ -281,6 +281,9 @@ void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len)
 	result->matches = matches;
 	result->matches_len = 0;
 	result->matches_size = matches_len;
+	result->simple = 0;
+	result->option = 0;
+	result->missing = 0;
 
 	assert((matches != NULL && matches_len != 0) && "Matches pool empty");
 }
@@ -494,15 +497,21 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 			if (ignore) continue;
 			if (!found) return error_unknown(argi);
-		} else match = match_simple(argi);
+			++result->option;
+		} else {
+			match = match_simple(argi);
+			++result->simple;
+		}
 
 		result_push(result, match);
 	}
 
 	for (size_t opt = 0; opt < parser->opts_len; ++opt) {
 		Opt_Info *info = &parser->opts[opt];
-		if (info->_seen == 0) continue;
-		if (info->flags & OPT_MATCH_MISSING) result_push(result, match_missing(opt));
+		if (info->_seen == 0 && info->flags & OPT_MATCH_MISSING) {
+			++result->missing;
+			result_push(result, match_missing(opt));
+		}
 	}
 
 	return error_none();

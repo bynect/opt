@@ -109,6 +109,9 @@ typedef struct {
 	Opt_Match *matches;
 	size_t matches_len;
 	size_t matches_size;
+	size_t simple;
+	size_t option;
+	size_t missing;
 } Opt_Result;
 
 typedef void (*Opt_Result_Simple_F)(const char *simple);
