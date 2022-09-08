@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 typedef enum {
 	OPT_VALUE_NONE,
@@ -124,9 +125,9 @@ void opt_value_print(Opt_Value value);
 
 void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name, const char *desc, Opt_Value_Kind value_kind, const char *value_name, Opt_Info_Flag flags);
 
-void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage);
+void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage, FILE *file);
 
-void opt_info_help(Opt_Info *opts, size_t opts_len, const char *head_note, const char *foot_note, Opt_Usage *usage);
+void opt_info_help(Opt_Info *opts, size_t opts_len, const char *head_note, const char *foot_note, Opt_Usage *usage, FILE *file);
 
 void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len);
 

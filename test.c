@@ -108,7 +108,7 @@ int main(int argc, const char **argv) {
 			.args_len = LEN(args),
 			.line_max = 90,
 		};
-		opt_info_help(opts, LEN(opts), NULL, NULL, &usage);
+		opt_info_help(opts, LEN(opts), NULL, NULL, &usage, stdout);
 	}
 
 	return 0;

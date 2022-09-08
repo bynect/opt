@@ -128,23 +128,23 @@ Opt_Error opt_value_read(Opt_Value *value, const char *base) {
 void opt_value_print(Opt_Value value) {
 	switch (value.kind) {
 		case OPT_VALUE_NONE:
-			printf("none");
+			fprintf(file, "none");
 			break;
 
 		case OPT_VALUE_STRING:
-			printf("'%s'", value.vstring);
+			fprintf(file, "'%s'", value.vstring);
 			break;
 
 		case OPT_VALUE_INT:
-			printf("%ld", value.vint);
+			fprintf(file, "%ld", value.vint);
 			break;
 
 		case OPT_VALUE_FLOAT:
-			printf("%lf", value.vfloat);
+			fprintf(file, "%lf", value.vfloat);
 			break;
 
 		case OPT_VALUE_BOOL:
-			printf("%s", value.vbool ? "true" : "false");
+			fprintf(file, "%s", value.vbool ? "true" : "false");
 			break;
 
 		default:
@@ -170,11 +170,11 @@ void opt_info_init(Opt_Info *info, const char *long_name, const char *short_name
 	if (flags & OPT_INFO_STOP_DUPLICATE) assert(!(flags & (OPT_INFO_MATCH_FIRST | OPT_INFO_MATCH_LAST)) && "Conflicting flags set");
 }
 
-void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage) {
+void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage, FILE *file) {
 	assert(usage != NULL && "Missing usage info");
 	assert(usage->line_max != 0);
 
-	size_t line_curr = printf("Usage: %s", usage->name);
+	size_t line_curr = fprintf(file, "Usage: %s", usage->name);
 	size_t line_pad = line_curr + 1;
 
 	const char *value[5] = { "", "string", "int", "float", "bool" };
@@ -187,47 +187,47 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage) {
 		bool optional = !(info->flags & OPT_MATCH_MISSING);
 		span += (optional * 4);
 
-		line_curr += printf(" ");
+		line_curr += fprintf(file, " ");
 
 		if (info->short_len != 0) {
 			span += info->long_len + 1;
 			assert(span < usage->line_max && "Option is too long to fit");
 
 			if (line_curr + span > usage->line_max) {
-				printf("\n");
+				fprintf(file, "\n");
 				for (size_t i = 0; i < line_pad; ++i) putchar(' ');
 				line_curr = line_pad;
 			}
 
-			if (optional) printf("[ ");
-			printf("-%s", info->short_name);
+			if (optional) fprintf(file, "[ ");
+			fprintf(file, "-%s", info->short_name);
 
 			if (info->value_kind != OPT_VALUE_NONE) {
-				if (info->value_name != NULL && info->value_name[0] != '\0') printf(" %s", info->value_name);
-				else printf(" %s", value[info->value_kind]);
+				if (info->value_name != NULL && info->value_name[0] != '\0') fprintf(file, " %s", info->value_name);
+				else fprintf(file, " %s", value[info->value_kind]);
 			}
 
-			if (optional) printf(" ]");
+			if (optional) fprintf(file, " ]");
 			line_curr += span;
 		} else {
 			span += info->long_len + 2;
 			assert(span < usage->line_max && "Option is too long to fit");
 
 			if (line_curr + span > usage->line_max) {
-				printf("\n");
+				fprintf(file, "\n");
 				for (size_t i = 0; i < line_pad; ++i) putchar(' ');
 				line_curr = line_pad;
 			}
 
-			if (optional) printf("[ ");
-			printf("--%s", info->long_name);
+			if (optional) fprintf(file, "[ ");
+			fprintf(file, "--%s", info->long_name);
 
 			if (info->value_kind != OPT_VALUE_NONE) {
-				if (info->value_name != NULL && info->value_name[0] != '\0') printf(" %s", info->value_name);
-				else printf(" %s", value[info->value_kind]);
+				if (info->value_name != NULL && info->value_name[0] != '\0') fprintf(file, " %s", info->value_name);
+				else fprintf(file, " %s", value[info->value_kind]);
 			}
 
-			if (optional) printf(" ]");
+			if (optional) fprintf(file, " ]");
 			line_curr += span;
 		}
 	}
@@ -236,44 +236,44 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage) {
 		size_t span = strlen(usage->args[arg]);
 		assert(span < usage->line_max && "Option is too long to fit");
 
-		line_curr += printf(" ");
+		line_curr += fprintf(file, " ");
 
 		if (line_curr + span > usage->line_max) {
-			printf("\n");
+			fprintf(file, "\n");
 			for (size_t i = 0; i < line_pad; ++i) putchar(' ');
 			line_curr = line_pad;
 		}
 
-		printf("%s", usage->args[arg]);
+		fprintf(file, "%s", usage->args[arg]);
 		line_curr += span;
 	}
 
-	printf("\n");
+	fprintf(file, "\n");
 }
 
-void opt_info_help(Opt_Info *opts, size_t opts_len, const char *head_note, const char *foot_note, Opt_Usage *usage) {
-	if (usage != NULL) opt_info_usage(opts, opts_len, usage);
+void opt_info_help(Opt_Info *opts, size_t opts_len, const char *head_note, const char *foot_note, Opt_Usage *usage, FILE *file) {
+	if (usage != NULL) opt_info_usage(opts, opts_len, usage, file);
 
-	printf("%s\n", (head_note == NULL || head_note[0] == '\0') ? "Options:" : head_note);
+	fprintf(file, "%s\n", (head_note == NULL || head_note[0] == '\0') ? "Options:" : head_note);
 
 	for (size_t opt = 0; opt < opts_len; ++opt) {
 		Opt_Info *info = &opts[opt];
 
 		size_t padding = 20;
-		padding -= printf("  ");
+		padding -= fprintf(file, "  ");
 
 		if (info->long_len != 0) {
-			padding -= printf("--%s", info->long_name);
-			if (info->short_len != 0) padding -= printf(", ");
+			padding -= fprintf(file, "--%s", info->long_name);
+			if (info->short_len != 0) padding -= fprintf(file, ", ");
 		}
 
-		if (info->short_len != 0) padding -= printf("-%s", info->short_name);
+		if (info->short_len != 0) padding -= fprintf(file, "-%s", info->short_name);
 
 		for (size_t i = 0; i < padding; ++i) putchar(' ');
-		printf("%s\n", info->desc != NULL ? info->desc : "");
+		fprintf(file, "%s\n", info->desc != NULL ? info->desc : "");
 	}
 
-	if (foot_note != NULL && foot_note[0] != '\0') printf("%s\n", foot_note);
+	if (foot_note != NULL && foot_note[0] != '\0') fprintf(file, "%s\n", foot_note);
 }
 
 void opt_result_init(Opt_Result *result, Opt_Match *matches, size_t matches_len) {
