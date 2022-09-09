@@ -25,6 +25,10 @@ static void print_error(Opt_Error error, Opt_Info *opts) {
 		case OPT_ERROR_NONE:
 			break;
 
+		case OPT_ERROR_STOPPED:
+			printf("error: Stopped\n");
+			break;
+
 		case OPT_ERROR_UNKNOWN_OPTION:
 			printf("error: unrecognized option %s\n", error.unknown_opt);
 			break;

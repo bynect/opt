@@ -19,6 +19,12 @@ static inline Opt_Error error_none() {
 	};
 }
 
+static inline Opt_Error error_stopped() {
+	return (Opt_Error) {
+		.kind = OPT_ERROR_STOPPED,
+	};
+}
+
 static inline Opt_Error error_unknown(const char *name) {
 	return (Opt_Error) {
 		.kind = OPT_ERROR_UNKNOWN_OPTION,
@@ -421,7 +427,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 						if (info->flags & OPT_INFO_STOP_PARSER) {
 							result_push(result, match);
-							return error_none();
+							return error_stopped();
 						}
 
 						if (info->_seen++ > 0) {
@@ -475,7 +481,7 @@ Opt_Error opt_parser_run(Opt_Parser *parser, Opt_Result *result, const char **ar
 
 						if (info->flags & OPT_INFO_STOP_PARSER) {
 							result_push(result, match);
-							return error_none();
+							return error_stopped();
 						}
 
 						if (info->_seen++ > 0) {
