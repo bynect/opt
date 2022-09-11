@@ -201,7 +201,7 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage, FILE *fil
 
 			if (line_curr + span > usage->line_max) {
 				fprintf(file, "\n");
-				for (size_t i = 0; i < line_pad; ++i) putchar(' ');
+				for (size_t i = 0; i < line_pad; ++i) putc(' ', file);
 				line_curr = line_pad;
 			}
 
@@ -221,7 +221,7 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage, FILE *fil
 
 			if (line_curr + span > usage->line_max) {
 				fprintf(file, "\n");
-				for (size_t i = 0; i < line_pad; ++i) putchar(' ');
+				for (size_t i = 0; i < line_pad; ++i) putc(' ', file);
 				line_curr = line_pad;
 			}
 
@@ -246,7 +246,7 @@ void opt_info_usage(Opt_Info *opts, size_t opts_len, Opt_Usage *usage, FILE *fil
 
 		if (line_curr + span > usage->line_max) {
 			fprintf(file, "\n");
-			for (size_t i = 0; i < line_pad; ++i) putchar(' ');
+			for (size_t i = 0; i < line_pad; ++i) putc(' ', file);
 			line_curr = line_pad;
 		}
 
@@ -275,7 +275,7 @@ void opt_info_help(Opt_Info *opts, size_t opts_len, const char *head_note, const
 
 		if (info->short_len != 0) padding -= fprintf(file, "-%s", info->short_name);
 
-		for (size_t i = 0; i < padding; ++i) putchar(' ');
+		for (size_t i = 0; i < padding; ++i) putc(' ', file);
 		fprintf(file, "%s\n", info->desc != NULL ? info->desc : "");
 	}
 
